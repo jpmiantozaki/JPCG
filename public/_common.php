@@ -4,69 +4,75 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-const SESSION_TTL = 900;       // 15 minutes
-const VIP_DAYS = 30;
-const STORE = __DIR__ . '/../data/sessions.json';
+const DB_PATH = '/var/data/jpcg.sqlite';
+const SESSION_TTL = 900;
+const DEFAULT_VIP_DAYS = 30;
 
-function respond(array $v, int $status = 200): never {
+function respond(array $v, int $status=200): never {
     http_response_code($status);
     echo json_encode($v, JSON_UNESCAPED_SLASHES);
     exit;
 }
-
-function read_json_body(): array {
+function body(): array {
+    static $b = null;
+    if ($b !== null) return $b;
     $raw = file_get_contents('php://input');
-    if (!$raw) return [];
-    $v = json_decode($raw, true);
-    return is_array($v) ? $v : [];
+    $v = $raw ? json_decode($raw, true) : [];
+    $b = is_array($v) ? $v : [];
+    return $b;
 }
-
-function request_value(string $key, string $default = ''): string {
-    $body = read_json_body();
-    if (isset($body[$key])) return (string)$body[$key];
-    if (isset($_POST[$key])) return (string)$_POST[$key];
-    if (isset($_GET[$key])) return (string)$_GET[$key];
+function value(string $k, string $default=''): string {
+    $b = body();
+    if (isset($b[$k])) return trim((string)$b[$k]);
+    if (isset($_POST[$k])) return trim((string)$_POST[$k]);
+    if (isset($_GET[$k])) return trim((string)$_GET[$k]);
     return $default;
 }
-
-function load_store(): array {
-    if (!is_file(STORE)) return [];
-    $v = json_decode((string)file_get_contents(STORE), true);
-    return is_array($v) ? $v : [];
-}
-
-function save_store(array $v): void {
-    $tmp = STORE . '.tmp';
-    file_put_contents($tmp, json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
-    rename($tmp, STORE);
-}
-
-function token(int $bytes = 24): string {
+function token(int $bytes=24): string {
     return rtrim(strtr(base64_encode(random_bytes($bytes)), '+/', '-_'), '=');
 }
-
-function cleanup(array $store): array {
-    $now = time();
-    foreach ($store as $k => $s) {
-        if (($s['session_expires'] ?? 0) < $now) unset($store[$k]);
-    }
-    return $store;
+function db(): PDO {
+    static $pdo = null;
+    if ($pdo) return $pdo;
+    if (!is_dir(dirname(DB_PATH))) @mkdir(dirname(DB_PATH), 0770, true);
+    $pdo = new PDO('sqlite:' . DB_PATH);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec('PRAGMA journal_mode=WAL;');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS codes(
+        code_hash TEXT PRIMARY KEY,
+        code_hint TEXT NOT NULL,
+        vip_days INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        redeemed_at INTEGER,
+        login_id TEXT,
+        vip_expiry INTEGER
+    )');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS sessions(
+        session TEXT PRIMARY KEY,
+        login_id TEXT NOT NULL,
+        relay_data TEXT NOT NULL,
+        stage INTEGER NOT NULL,
+        vip_expiry INTEGER NOT NULL,
+        session_expiry INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+    )');
+    return $pdo;
 }
-
-function relay_response(
-    bool $error,
-    string $message,
-    string $data,
-    int $serverType,
-    string $session,
-    int $vipExpiry
-): array {
+function code_hash(string $code): string {
+    return hash('sha256', strtoupper($code));
+}
+function admin_ok(): bool {
+    $expected = getenv('JPCG_ADMIN_KEY') ?: '';
+    $provided = $_SERVER['HTTP_X_ADMIN_KEY'] ?? value('admin_key');
+    return $expected !== '' && $provided !== '' && hash_equals($expected, $provided);
+}
+function relay(bool $error, string $message, string $data, int $type, string $session, int $expiry): array {
     return [
-        'error' => $error,
-        'message' => $message,
-        'data' => $data,
-        'servertype' => $serverType,
-        'session' => $session,
-        'vip_expiry' => $vipExpiry
+        'error'=>$error, 'message'=>$message, 'data'=>$data,
+        'servertype'=>$type, 'session'=>$session, 'vip_expiry'=>$expiry
     ];
+}
+function clean_sessions(PDO $db): void {
+    $q=$db->prepare('DELETE FROM sessions WHERE session_expiry < ?');
+    $q->execute([time()]);
 }

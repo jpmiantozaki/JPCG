@@ -1,33 +1,19 @@
 <?php
-require __DIR__ . '/_common.php';
+require __DIR__.'/_common.php';
+$session=value('session');
+$data=value('data');
+$db=db();
+clean_sessions($db);
 
-$session = trim(request_value('session'));
-$data = trim(request_value('data'));
+$q=$db->prepare('SELECT * FROM sessions WHERE session=?');
+$q->execute([$session]);
+$s=$q->fetch(PDO::FETCH_ASSOC);
+if(!$s) respond(relay(true,'Invalid or expired session','',0,'',0),401);
+if(!hash_equals((string)$s['relay_data'],$data)) respond(relay(true,'Relay data mismatch','',0,'',0),401);
+if((int)$s['vip_expiry']<=time()) respond(relay(true,'VIP expired','',0,'',0),403);
 
-$store = cleanup(load_store());
-if ($session === '' || !isset($store[$session])) {
-    save_store($store);
-    respond(relay_response(true, 'Invalid or expired mock session', '', 0, '', 0), 401);
-}
-
-$s = $store[$session];
-if (!hash_equals((string)$s['relay_data'], $data)) {
-    respond(relay_response(true, 'Mock relay data mismatch', '', 0, '', 0), 401);
-}
-
-if (($s['vip_expiry'] ?? 0) <= time()) {
-    unset($store[$session]);
-    save_store($store);
-    respond(relay_response(true, 'Mock VIP expired', '', 0, '', 0), 403);
-}
-
-/* Advance our independent mock protocol from LoginServer(0) to GameServer(1). */
-$nextData = token(18);
-$store[$session]['relay_data'] = $nextData;
-$store[$session]['stage'] = 'game';
-$store[$session]['session_expires'] = time() + SESSION_TTL;
-save_store($store);
-
-error_log('[JPCG_MOCK_VERIFY] session=' . substr($session, 0, 8) . '... stage=game');
-
-respond(relay_response(false, '', $nextData, 1, $session, (int)$s['vip_expiry']));
+$newData=token(18);
+$u=$db->prepare('UPDATE sessions SET relay_data=?,stage=1,session_expiry=? WHERE session=?');
+$u->execute([$newData,time()+SESSION_TTL,$session]);
+error_log('[JPCG_VERIFY] session='.substr($session,0,8).'... stage=game');
+respond(relay(false,'',$newData,1,$session,(int)$s['vip_expiry']));

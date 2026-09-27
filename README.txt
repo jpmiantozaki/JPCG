@@ -1,53 +1,68 @@
-JPCG Mock VIP Protocol
-======================
+JPCG VIP Service v1
+===================
 
-Purpose
--------
-Independent test protocol for JPANL codes. It does NOT connect to, generate
-credentials for, or authenticate against the official game's relay servers.
+Independent JPANL entitlement backend. It does NOT authenticate against
+official ANLGarden/PlayPark relay or game servers.
 
-Recovered client-shaped response fields used by this mock:
-  error       bool
-  message     string
-  data        string (our own random mock relay token)
-  servertype  int    (0 = mock LoginServer, 1 = mock GameServer)
-  session     string (our own short-lived random session)
-  vip_expiry  uint32 Unix seconds
+Features
+--------
+- Unique JPANL + 9 digit codes
+- SHA-256 code storage (plaintext codes returned only when generated)
+- One-time redemption
+- Binding to a login identifier
+- Server-side VIP expiry
+- 15-minute sessions
+- Relay-data rotation on verify
+- LoginServer(0) -> GameServer(1) mock transition
+- Admin-protected generator/listing
+- SQLite persistent database path: /var/data/jpcg.sqlite
 
-Flow
-----
-1) POST /redeemvip.php
-   JSON: {"login":"test@example.invalid","code":"JPANL123456789"}
+IMPORTANT RENDER SETUP
+----------------------
+For persistence, attach a Render persistent disk mounted at:
 
-   Returns servertype=0 plus our own data/session tokens.
+    /var/data
 
-2) POST /verify.php
-   JSON: {"session":"<session from step 1>","data":"<data from step 1>"}
+Without a persistent disk, the SQLite database can disappear when the
+instance is replaced/redeployed.
 
-   Returns servertype=1 and rotates the mock relay data token.
+Set this Render environment variable:
 
-3) GET /status.php?session=<session>
-   Shows the current mock stage and expiries.
+    JPCG_ADMIN_KEY = <your own strong secret>
 
-Deployment
-----------
-Upload this repository to a NEW Render service. Do not replace the current
-diagnostic service until you have tested this mock independently.
+A random suggested key for initial setup is shown below. Change it if desired:
+    o0mJif8RkvqWoz2u0vhkARnkGxZoLQpOf3xVyuptSr8
 
-Important: Render free instances have ephemeral local storage. sessions.json
-is therefore suitable only for this diagnostic. A production design should
-use a persistent database.
+Do NOT commit the real admin key into GitHub.
 
-Local test examples
--------------------
-curl -s -X POST http://localhost/redeemvip.php   -H "Content-Type: application/json"   -d '{"login":"test@example.invalid","code":"JPANL123456789"}'
+Endpoints
+---------
+GET  /health.php
 
-Then pass the returned session and data values to /verify.php.
+POST /admin_generate.php
+Header: X-Admin-Key: <secret>
+JSON: {"count":5,"days":30}
 
-Security notes
---------------
-- Never send the user's password to this service.
-- Bind production entitlements to a stable login identifier or internal ID.
-- Store redemption codes hashed in a persistent database.
-- Use one-time redemption and server-side expiry checks.
-- Keep the mock relay tokens separate from all official service credentials.
+GET /admin_codes.php
+Header: X-Admin-Key: <secret>
+
+POST /redeemvip.php
+JSON: {"login":"jpcg-test","code":"JPANL123456789"}
+
+POST /verify.php
+JSON: {"session":"...","data":"..."}
+
+GET /status.php?session=...
+
+PowerShell generator example
+----------------------------
+$headers = @{ "X-Admin-Key" = "YOUR_SECRET" }
+$body = @{ count=5; days=30 } | ConvertTo-Json
+Invoke-RestMethod -Method Post `
+  -Uri "https://YOUR-SERVICE.onrender.com/admin_generate.php" `
+  -Headers $headers -ContentType "application/json" -Body $body
+
+Security
+--------
+Never send/store the user's password. Bind entitlements only to the chosen
+login identifier or, later, an internal account ID.
