@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: jpcg-mock-vip-protocol
+    runtime: docker
+    plan: free
+    healthCheckPath: /health.php
