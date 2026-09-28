@@ -1,127 +1,20 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JPCG Admin</title>
-<style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#202124;background:#f5f6f8}
-*{box-sizing:border-box} body{margin:0}.wrap{max-width:1050px;margin:auto;padding:24px}
-h1{margin:0 0 4px}.sub{color:#666;margin-bottom:22px}
-.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:18px;margin-bottom:16px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:220px}
-label{display:block;font-size:13px;color:#555;margin-bottom:5px}
-input,select,button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid #bbb}
-input,select{width:100%}button{cursor:pointer;background:#202124;color:white;border:0}
-button.secondary{background:#e8eaed;color:#202124}.status{margin-top:10px;white-space:pre-wrap}
-.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#eee;font-size:12px}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:9px;border-bottom:1px solid #eee;font-size:14px}
-code{font-family:ui-monospace,Consolas,monospace}.newcode{font-size:22px;font-weight:700;letter-spacing:.5px}
-.hidden{display:none}@media(max-width:700px){table{display:block;overflow:auto}}
-</style>
-</head>
-<body><div class="wrap">
-<h1>JPCG Admin</h1>
-<div class="sub">Independent JPANL entitlement administration</div>
-
-<div class="card">
-  <div class="row">
-    <div class="field"><label>Admin key</label><input id="key" type="password" autocomplete="off" placeholder="JPCG_ADMIN_KEY"></div>
-    <button id="connect">Connect</button>
-    <button class="secondary" id="forget">Forget key</button>
-  </div>
-  <div class="status" id="authStatus">Not connected.</div>
-</div>
-
-<div id="panel" class="hidden">
-  <div class="card">
-    <h3>Generate JPANL code</h3>
-    <div class="row">
-      <div class="field"><label>VIP duration</label>
-        <select id="days"><option>1</option><option>7</option><option selected>30</option><option>60</option><option>90</option><option>365</option></select>
-      </div>
-      <button id="generate">Generate Code</button>
-    </div>
-    <div id="generated" class="status"></div>
-  </div>
-
-  <div class="card">
-    <div class="row">
-      <h3 style="flex:1;margin:0">Codes</h3>
-      <select id="filter" style="width:auto"><option value="all">All</option><option value="unused">Unused</option><option value="active">Active</option><option value="expired">Expired</option></select>
-      <button class="secondary" id="refresh">Refresh</button>
-    </div>
-    <div id="summary" class="status"></div>
-    <table>
-      <thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Account hash</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
-</div>
-
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JPCG Admin</title>
+<style>body{font-family:system-ui;background:#f5f6f8;margin:0}.w{max-width:1050px;margin:auto;padding:26px}.c{background:white;border:1px solid #ddd;border-radius:12px;padding:18px;margin:16px 0}.r{display:flex;gap:10px;flex-wrap:wrap}input,select,button{padding:10px;border-radius:8px;border:1px solid #bbb;font:inherit}input{flex:1}button{background:#202124;color:white}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}.hide{display:none}code{font-family:Consolas,monospace}</style></head>
+<body><div class="w"><h1>JPCG Admin</h1><p>Independent JPANL entitlement administration</p>
+<div class="c"><div class="r"><input id="key" type="password" placeholder="Admin key"><button onclick="connect()">Connect</button><button onclick="forget()">Forget key</button></div><p id="auth">Not connected.</p></div>
+<div id="panel" class="hide"><div class="c"><h3>Generate JPANL code</h3><div class="r"><select id="days"><option>1</option><option>7</option><option selected>30</option><option>60</option><option>90</option><option>365</option></select><button onclick="generate()">Generate Code</button></div><p id="gen"></p></div>
+<div class="c"><div class="r"><h3 style="flex:1">Codes</h3><select id="filter" onchange="render()"><option value="all">All</option><option>unused</option><option>active</option><option>expired</option></select><button onclick="refresh()">Refresh</button></div><p id="sum"></p>
+<table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Account hash</th></tr></thead><tbody id="rows"></tbody></table></div></div></div>
 <script>
-const $=id=>document.getElementById(id);
-const keyHeader=()=>({'X-JPCG-Admin-Key':$('key').value.trim()});
-const fmt=v=>v?new Date(Number(v)*1000).toLocaleString():'—';
-let codes=[];
-
+const $=x=>document.getElementById(x); let codes=[];
 $('key').value=sessionStorage.getItem('jpcg_admin_key')||'';
-
-async function api(path, opts={}){
-  opts.headers={...(opts.headers||{}),...keyHeader(),'Accept':'application/json'};
-  const r=await fetch(path,opts);
-  let j={}; try{j=await r.json()}catch(e){}
-  if(!r.ok) throw new Error(`HTTP ${r.status}: ${j.error||j.message||'request failed'}`);
-  return j;
-}
-async function connect(){
-  try{
-    $('authStatus').textContent='Connecting…';
-    const j=await api('/admin_codes.php');
-    sessionStorage.setItem('jpcg_admin_key',$('key').value.trim());
-    $('authStatus').textContent='Connected.';
-    $('panel').classList.remove('hidden');
-    codes=j.codes||[]; render();
-  }catch(e){$('authStatus').textContent=e.message;$('panel').classList.add('hidden')}
-}
-async function refresh(){
-  try{const j=await api('/admin_codes.php');codes=j.codes||[];render()}
-  catch(e){$('summary').textContent=e.message}
-}
-function render(){
-  const f=$('filter').value;
-  const shown=codes.filter(c=>f==='all'||c.state===f);
-  const counts={unused:0,active:0,expired:0};
-  codes.forEach(c=>{if(counts[c.state]!==undefined)counts[c.state]++});
-  $('summary').textContent=`${codes.length} total • ${counts.unused} unused • ${counts.active} active • ${counts.expired} expired`;
-  $('rows').innerHTML=shown.map(c=>`<tr>
-    <td><code>${esc(c.code_hint||'')}</code></td><td>${c.vip_days}</td>
-    <td>${fmt(c.created_at)}</td><td>${fmt(c.redeemed_at)}</td><td>${fmt(c.vip_expiry)}</td>
-    <td><span class="badge">${esc(c.state||'')}</span></td>
-    <td><code>${esc((c.login_id_hash||'—').slice(0,16))}${c.login_id_hash?'…':''}</code></td></tr>`).join('');
-}
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-async function generate(){
-  try{
-    $('generated').textContent='Generating…';
-    const days=Number($('days').value);
-    const j=await api('/admin_generate.php',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({vip_days:days})
-    });
-    const code=j.code||j.jpcode||j.redemption_code||'';
-    $('generated').innerHTML=code
-      ? `<div>New ${days}-day code:</div><div class="newcode"><code>${esc(code)}</code></div><div>Copy it now; the service does not need to display plaintext codes again.</div>`
-      : `<div>Generated successfully, but no plaintext code field was returned.</div>`;
-    await refresh();
-  }catch(e){$('generated').textContent=e.message}
-}
-$('connect').onclick=connect;
-$('refresh').onclick=refresh;
-$('generate').onclick=generate;
-$('filter').onchange=render;
-$('forget').onclick=()=>{sessionStorage.removeItem('jpcg_admin_key');$('key').value='';$('panel').classList.add('hidden');$('authStatus').textContent='Key forgotten.'};
-if($('key').value) connect();
-</script>
-</div></body></html>
+const headers=()=>({'X-Admin-Key':$('key').value.trim(),'Accept':'application/json'});
+async function api(url,o={}){o.headers={...(o.headers||{}),...headers()};let r=await fetch(url,o),j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Error('HTTP '+r.status+': '+(j.error||j.message||'request failed'));return j}
+async function connect(){try{let j=await api('/admin_codes.php');sessionStorage.setItem('jpcg_admin_key',$('key').value.trim());$('auth').textContent='Connected.';$('panel').classList.remove('hide');codes=j.codes||[];render()}catch(e){$('auth').textContent=e.message}}
+function forget(){sessionStorage.removeItem('jpcg_admin_key');$('key').value='';$('panel').classList.add('hide');$('auth').textContent='Key forgotten.'}
+async function refresh(){try{let j=await api('/admin_codes.php');codes=j.codes||[];render()}catch(e){$('sum').textContent=e.message}}
+function f(v){return v?new Date(Number(v)*1000).toLocaleString():'—'} function e(s){return String(s||'').replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))}
+function render(){let q=$('filter').value,a=codes.filter(c=>q==='all'||c.state===q);let n={unused:0,active:0,expired:0};codes.forEach(c=>n[c.state]=(n[c.state]||0)+1);$('sum').textContent=`${codes.length} total • ${n.unused||0} unused • ${n.active||0} active • ${n.expired||0} expired`;$('rows').innerHTML=a.map(c=>`<tr><td><code>${e(c.code_hint)}</code></td><td>${c.vip_days}</td><td>${f(c.created_at)}</td><td>${f(c.redeemed_at)}</td><td>${f(c.vip_expiry)}</td><td>${e(c.state)}</td><td><code>${e((c.login_id_hash||'—').slice(0,16))}${c.login_id_hash?'…':''}</code></td></tr>`).join('')}
+async function generate(){try{$('gen').textContent='Generating…';let d=Number($('days').value),j=await api('/admin_generate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vip_days:d})});let c=j.code||j.jpcode||j.redemption_code||'';$('gen').textContent=c?`New ${d}-day code: ${c}`:'Generated, but no plaintext code field was returned.';await refresh()}catch(e){$('gen').textContent=e.message}}
+if($('key').value)connect();
+</script></body></html>
