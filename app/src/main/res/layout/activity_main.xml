@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_garden">
+<LinearLayout android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+<TextView android:text="JPCG Garden" android:textSize="30sp" android:textStyle="bold" android:textColor="#294535" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:text="Independent garden membership" android:textColor="#627268" android:layout_marginBottom="18dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<LinearLayout android:background="@drawable/card" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+<TextView android:text="GARDENER ACCOUNT" android:textStyle="bold" android:textColor="#6D7D71" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<EditText android:id="@+id/login" android:hint="Login identifier" android:inputType="text" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/vipCard" android:background="@drawable/vip_card" android:orientation="vertical" android:layout_marginTop="14dp" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content">
+<TextView android:text="✦  JPCG VIP MEMBERSHIP" android:textSize="18sp" android:textStyle="bold" android:textColor="#FFFFFF" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/vipExpiry" android:textColor="#FFFFFF" android:textSize="15sp" android:layout_marginTop="12dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:id="@+id/vipRemaining" android:textColor="#E7F3EA" android:layout_marginTop="4dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/redeemPanel" android:background="@drawable/card" android:orientation="vertical" android:layout_marginTop="14dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+<TextView android:text="ACTIVATE MEMBERSHIP" android:textStyle="bold" android:textColor="#456B52" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<TextView android:text="Enter a JPANL code to activate this garden account." android:textColor="#6D756F" android:layout_marginTop="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+<EditText android:id="@+id/code" android:hint="JPANL code" android:inputType="textCapCharacters" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<Button android:id="@+id/redeem" android:text="ACTIVATE VIP" android:textColor="#FFFFFF" android:background="@drawable/button_primary" android:layout_marginTop="10dp" android:layout_width="match_parent" android:layout_height="48dp"/>
+</LinearLayout>
+<Button android:id="@+id/status" android:text="REFRESH MEMBERSHIP" android:textColor="#385B46" android:background="@drawable/button_secondary" android:layout_marginTop="14dp" android:layout_width="match_parent" android:layout_height="48dp"/>
+<TextView android:id="@+id/output" android:text="Ready." android:textColor="#536158" android:padding="10dp" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+<TextView android:text="JPCG • Independent test service" android:textColor="#87938B" android:gravity="center" android:layout_marginTop="18dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout></ScrollView>

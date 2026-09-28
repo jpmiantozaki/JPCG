@@ -1,17 +1,15 @@
-# JPCG Web Admin Panel v1.3
+# JPCG Garden v5
+Garden-themed redesign of the independent JPCG Android entitlement client.
 
-Single-code generation UX update.
+The visual direction uses the garden/couple-garden context from the supplied reference sites, but uses original JPCG branding and no copied official artwork or logos.
 
-Changes:
-- still generates exactly ONE JPANL code per click
-- Generate button is disabled while the request is running to prevent accidental double-generation
-- generated plaintext code is displayed more prominently
-- Copy Code changes to "Copied!" after successful clipboard copy
-- clear reminder that the plaintext should be copied now
-- persistent database listing remains masked/hash-only
-- no database or Android-client changes required
+Preserved functionality:
+- saved login + automatic status check
+- JPANL redemption
+- redeem -> verify -> persistent account-status refresh
+- active / expired / not activated
+- expiry and remaining time
+- redemption controls hidden while active
 
-Replace only:
-    public/admin_panel.html
-
-Then redeploy Render.
+Build in Android Studio:
+Build > Generate App Bundles or APKs > Generate APKs
