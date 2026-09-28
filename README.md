@@ -1,18 +1,15 @@
-# JPCG account-status backend patch
+# Corrected JPCG account-status patch
 
-Copy `public/account_status.php` into the existing JPCG v2 repository's `public/` directory and redeploy Render.
+This version matches the deployed v2 schema:
+- table: `codes`
+- bound account column: `login_id`
+- expiry column: `vip_expiry`
+- redemption marker: `redeemed_at`
 
-It adds:
+Replace the previous `public/account_status.php` with this file and redeploy.
 
-    GET /account_status.php?login=<login identifier>
+Then test:
+https://jpcg.onrender.com/account_status.php?login=JPANDROID1
 
-Response examples:
-
-    {"ok":true,"state":"active","vip_expiry":1793150381}
-    {"ok":true,"state":"expired","vip_expiry":...}
-    {"ok":true,"state":"not_activated","vip_expiry":null}
-
-The endpoint does not return JPANL codes, sessions, or relay-data tokens.
-
-After deployment, test in a browser or PowerShell:
-    https://jpcg.onrender.com/account_status.php?login=JPANDROID1
+Expected for the existing active entitlement:
+{"ok":true,"state":"active","vip_expiry":1793150381}
