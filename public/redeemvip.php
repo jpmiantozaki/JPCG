@@ -5,7 +5,7 @@ if($login==='') respond(relay(true,'Missing login identifier','',0,'',0),400);
 if(!preg_match('/^JPANL[0-9]{9}$/',$code)) respond(relay(true,'Invalid JPANL code','',0,'',0),400);
 $db=db(); clean_sessions($db); $db->beginTransaction();
 try {
- $q=$db->prepare('SELECT * FROM codes WHERE code_hash=?'); $q->execute([code_hash($code)]);
+ $q=$db->prepare('SELECT * FROM codes WHERE code_hash=? FOR UPDATE'); $q->execute([code_hash($code)]);
  $row=$q->fetch(PDO::FETCH_ASSOC);
  if(!$row){$db->rollBack(); respond(relay(true,'Invalid JPANL code','',0,'',0),404);}
  if($row['redeemed_at']!==null){
