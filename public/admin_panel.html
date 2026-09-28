@@ -1,8 +1,8 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JPCG Admin</title>
-<style>body{font-family:system-ui;background:#f5f6f8;margin:0}.w{max-width:1050px;margin:auto;padding:26px}.c{background:white;border:1px solid #ddd;border-radius:12px;padding:18px;margin:16px 0}.r{display:flex;gap:10px;flex-wrap:wrap}input,select,button{padding:10px;border-radius:8px;border:1px solid #bbb;font:inherit}input{flex:1}button{background:#202124;color:white}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}.hide{display:none}code{font-family:Consolas,monospace}</style></head>
+<style>body{font-family:system-ui;background:#f5f6f8;margin:0}.w{max-width:1050px;margin:auto;padding:26px}.c{background:white;border:1px solid #ddd;border-radius:12px;padding:18px;margin:16px 0}.r{display:flex;gap:10px;flex-wrap:wrap}input,select,button{padding:10px;border-radius:8px;border:1px solid #bbb;font:inherit}input{flex:1}button{background:#202124;color:white}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}.hide{display:none}code{font-family:Consolas,monospace}.generated-box{margin-top:14px;padding:16px;border:1px solid #ddd;border-radius:10px;background:#f7f8fa}.generated-code{font-size:22px;font-weight:700;letter-spacing:.6px;display:inline-block;margin-right:10px}button:disabled{opacity:.55;cursor:not-allowed}</style></head>
 <body><div class="w"><h1>JPCG Admin</h1><p>Independent JPANL entitlement administration</p>
 <div class="c"><div class="r"><input id="key" type="password" placeholder="Admin key"><button onclick="connect()">Connect</button><button onclick="forget()">Forget key</button></div><p id="auth">Not connected.</p></div>
-<div id="panel" class="hide"><div class="c"><h3>Generate JPANL code</h3><div class="r"><select id="days"><option>1</option><option>7</option><option selected>30</option><option>60</option><option>90</option><option>365</option></select><button onclick="generate()">Generate Code</button></div><p id="gen"></p></div>
+<div id="panel" class="hide"><div class="c"><h3>Generate JPANL code</h3><div class="r"><select id="days"><option>1</option><option>7</option><option selected>30</option><option>60</option><option>90</option><option>365</option></select><button id="generateBtn" onclick="generate()">Generate Code</button></div><p id="gen"></p></div>
 <div class="c"><div class="r"><h3 style="flex:1">Codes</h3><select id="filter" onchange="render()"><option value="all">All</option><option>unused</option><option>active</option><option>expired</option></select><button onclick="refresh()">Refresh</button></div><p id="sum"></p>
 <table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Account hash</th></tr></thead><tbody id="rows"></tbody></table></div></div></div>
 <script>
@@ -15,6 +15,40 @@ function forget(){sessionStorage.removeItem('jpcg_admin_key');$('key').value='';
 async function refresh(){try{let j=await api('/admin_codes.php');codes=j.codes||[];render()}catch(e){$('sum').textContent=e.message}}
 function f(v){return v?new Date(Number(v)*1000).toLocaleString():'—'} function e(s){return String(s||'').replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))}
 function render(){let q=$('filter').value,a=codes.filter(c=>q==='all'||c.state===q);let n={unused:0,active:0,expired:0};codes.forEach(c=>n[c.state]=(n[c.state]||0)+1);$('sum').textContent=`${codes.length} total • ${n.unused||0} unused • ${n.active||0} active • ${n.expired||0} expired`;$('rows').innerHTML=a.map(c=>`<tr><td><code>${e(c.code_hint)}</code></td><td>${c.vip_days}</td><td>${f(c.created_at)}</td><td>${f(c.redeemed_at)}</td><td>${f(c.vip_expiry)}</td><td>${e(c.state)}</td><td><code>${e((c.login_id_hash||'—').slice(0,16))}${c.login_id_hash?'…':''}</code></td></tr>`).join('')}
-async function generate(){try{$('gen').textContent='Generating…';let d=Number($('days').value),j=await api('/admin_generate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:d,count:1})});let c=(Array.isArray(j.codes)&&j.codes.length?j.codes[0]:(j.code||j.jpcode||j.redemption_code||''));if(c){$('gen').innerHTML=`New ${j.days||d}-day code: <strong><code id="newCode">${e(c)}</code></strong> <button id="copyNew" type="button">Copy Code</button>`;document.getElementById('copyNew').onclick=async()=>{try{await navigator.clipboard.writeText(c);document.getElementById('copyNew').textContent='Copied!'}catch(x){document.getElementById('copyNew').textContent='Copy failed'}}}else{$('gen').textContent='Generated successfully, but no code was returned.'}await refresh()}catch(e){$('gen').textContent=e.message}}
+async function generate(){
+  const btn=$('generateBtn');
+  if(btn.disabled)return;
+  btn.disabled=true;
+  btn.textContent='Generating…';
+  $('gen').textContent='Generating one JPANL code…';
+  try{
+    const d=Number($('days').value);
+    const j=await api('/admin_generate.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({days:d,count:1})
+    });
+    const c=(Array.isArray(j.codes)&&j.codes.length)?j.codes[0]:'';
+    if(!c)throw Error('Generation succeeded but no plaintext code was returned.');
+    $('gen').innerHTML=`<div class="generated-box"><div>New ${j.days||d}-day code</div><div style="margin-top:8px"><span class="generated-code"><code>${e(c)}</code></span><button id="copyNew" type="button">Copy Code</button></div><div id="copyState" style="margin-top:8px">Copy this code now. The database keeps only its hash and masked hint.</div></div>`;
+    $('copyNew').onclick=async()=>{
+      const copyBtn=$('copyNew');
+      try{
+        await navigator.clipboard.writeText(c);
+        copyBtn.textContent='Copied!';
+        $('copyState').textContent='Code copied to clipboard.';
+        setTimeout(()=>copyBtn.textContent='Copy Code',1800);
+      }catch(x){
+        $('copyState').textContent='Clipboard access was blocked. Select and copy the code manually.';
+      }
+    };
+    await refresh();
+  }catch(e){
+    $('gen').textContent=e.message;
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Generate Code';
+  }
+}
 if($('key').value)connect();
 </script></body></html>

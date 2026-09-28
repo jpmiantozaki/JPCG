@@ -1,18 +1,17 @@
-# JPCG Web Admin Panel v1.2
+# JPCG Web Admin Panel v1.3
 
-Corrected to the deployed `admin_generate.php` contract:
+Single-code generation UX update.
 
-Request:
-    POST /admin_generate.php
-    {"days":30,"count":1}
+Changes:
+- still generates exactly ONE JPANL code per click
+- Generate button is disabled while the request is running to prevent accidental double-generation
+- generated plaintext code is displayed more prominently
+- Copy Code changes to "Copied!" after successful clipboard copy
+- clear reminder that the plaintext should be copied now
+- persistent database listing remains masked/hash-only
+- no database or Android-client changes required
 
-Response:
-    {"ok":true,"days":30,"codes":["JPANL#########"]}
+Replace only:
+    public/admin_panel.html
 
-New:
-- displays the full newly generated plaintext code
-- Copy Code button
-- still uses X-Admin-Key authentication
-- refreshes the code table after generation
-
-Replace only `public/admin_panel.html` and redeploy.
+Then redeploy Render.
