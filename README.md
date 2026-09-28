@@ -1,18 +1,39 @@
-# Couple Garden Mobile Admin v1.6
+# Couple Garden Mobile – Redeem Diagnostic
 
-Deployment-ready visual update.
+This is a temporary, non-authenticating diagnostic endpoint.
 
-Changes:
-- Added the original Couple Garden Mobile leaf/heart logo created for this project.
-- Added the logo to the green admin header.
-- Added a matching browser favicon.
-- Header subtitle now says "Independent CGM service".
-- Existing CGMANG generator, admin authentication, code table, and backend API behavior are unchanged.
-- No APK files are included or modified.
+It records only:
+- request method/path
+- query length
+- whether `data` exists
+- `data` length
+- a broad character-set classification
+- SHA-256 of the received `data` value
+- user-agent/content metadata
 
-Deploy these files together:
-    public/admin_panel.html
-    public/assets/cgm-logo.png
-    public/assets/favicon.png
+It deliberately does NOT:
+- decrypt the protected payload
+- log the full protected payload
+- validate CGMANG codes
+- issue VIP/session/data credentials
+- connect to an official relay
 
-Keep the assets folder structure exactly as shown.
+## Safe deployment
+
+1. Upload `public/redeemvip_diagnostic.php` to the existing CGM backend.
+2. Do NOT replace the working `redeemvip.php` yet.
+3. First verify in a browser:
+   `/redeemvip_diagnostic.php?data=TEST123`
+   It should return HTTP 400 with `CGM diagnostic capture complete`.
+4. For the APK experiment, route only the test APK's redemption URL to:
+   `/redeemvip_diagnostic.php?data=`
+   while leaving authenticate/session/verify and all other endpoints unchanged.
+5. Enter a disposable test input in the APK redemption field.
+6. In Render logs, look for:
+   `[CGM_REDEEM_DIAGNOSTIC]`
+7. Repeat with a second disposable input and compare:
+   `data_length`, `data_charset`, and `data_sha256`.
+
+After the experiment, restore the test APK redemption URL. The endpoint can then be removed.
+
+Do not paste full protected request payloads or secrets into public screenshots.
