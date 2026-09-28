@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Couple Garden Mobile</title><link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f7f4ef;color:#303a32}
+.hero{background:linear-gradient(135deg,#315a43,#78966b);color:white;padding:30px 20px}.brand{display:flex;align-items:center;gap:18px}.brand-logo{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 5px 10px rgba(0,0,0,.18))}.brand-copy{min-width:0}
+.wrap{max-width:1050px;margin:auto}.hero h1{margin:0;font-size:32px}.hero p{margin:8px 0 0;opacity:.9}
+main{max-width:1050px;margin:-18px auto 40px;padding:0 18px}.card{background:#fff;border:1px solid #dfe6dd;border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px #26382b12}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.stat{background:#f2f7f1;border-radius:14px;padding:16px}.stat b{font-size:26px;display:block;color:#315a43}
+label{font-weight:700;font-size:13px}input,select{padding:11px;border:1px solid #cdd8cf;border-radius:10px;font-size:15px}button{padding:11px 16px;border:0;border-radius:10px;background:#315a43;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.55}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:6px}
+.generated{margin-top:15px;background:#edf6ed;border:1px solid #c7dac8;padding:17px;border-radius:14px}.code{font-family:Consolas,monospace;font-size:22px;font-weight:700;letter-spacing:.5px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #edf0ec}th{color:#68766b}.badge{padding:5px 9px;border-radius:99px;font-size:12px;font-weight:bold}.active{background:#e1f3e5;color:#28633a}.unused{background:#fff1ce;color:#765a12}.expired{background:#eee;color:#666}
+.muted{color:#748078;font-size:13px}.error{color:#a22}.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+@media(max-width:650px){.hero{padding-top:24px}.brand-logo{width:66px;height:66px}.hero h1{font-size:26px}.code{font-size:17px}table{font-size:12px}.hide-sm{display:none}}
+</style></head><body>
+<header class="hero"><div class="wrap"><div class="brand"><img class="brand-logo" src="assets/cgm-logo.png" alt="Couple Garden Mobile logo"><div class="brand-copy"><h1>Couple Garden Mobile</h1><p>Membership code management • Independent CGM service</p></div></div></div></header>
+<main>
+<section class="card"><div class="toolbar"><div><h2 style="margin:0">Admin access</h2><div class="muted">Your key is kept in this browser session only.</div></div>
+<div class="row"><div class="field"><label>Admin key</label><input id="key" type="password" placeholder="Enter admin key"></div><button id="connect">Connect</button></div></div><div id="accessMsg" class="muted"></div></section>
+
+<section id="dash" style="display:none">
+<div class="grid" style="margin-bottom:16px">
+<div class="stat"><span>Total codes</span><b id="total">0</b></div><div class="stat"><span>Unused</span><b id="unused">0</b></div>
+<div class="stat"><span>Active</span><b id="active">0</b></div><div class="stat"><span>Expired</span><b id="expired">0</b></div></div>
+
+<section class="card"><h2 style="margin-top:0">Generate CGMANG code</h2><p class="muted">Generate one membership code at a time. Copy the full code immediately; stored records remain masked.</p>
+<div class="row"><div class="field"><label>Validity</label><select id="days"><option value="15">15 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select></div>
+<button id="generate">Generate Code</button></div><div id="generated"></div></section>
+
+<section class="card"><div class="toolbar"><div><h2 style="margin:0">Membership codes</h2><div class="muted">Up to the latest 200 records.</div></div><button id="refresh">Refresh</button></div>
+<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th class="hide-sm">Account hash</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+</section></main>
+<script>
+const BASE='https://jpcg.onrender.com', $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=x=>x?new Date(Number(x)*1000).toLocaleString():'—';
+$('key').value=sessionStorage.getItem('jpcg_admin_key')||'';
+async function api(path,opt={}){let k=$('key').value.trim();let h=Object.assign({'X-Admin-Key':k},opt.headers||{});let r=await fetch(BASE+path,Object.assign({},opt,{headers:h}));let j=await r.json().catch(()=>({}));if(!r.ok)throw Error('HTTP '+r.status+': '+(j.error||j.message||'request failed'));return j}
+async function load(){try{let j=await api('/admin_codes.php');sessionStorage.setItem('jpcg_admin_key',$('key').value.trim());$('dash').style.display='block';$('accessMsg').textContent='Connected.';render(j.codes||[])}catch(e){$('dash').style.display='none';$('accessMsg').innerHTML='<span class="error">'+esc(e.message)+'</span>'}}
+function render(a){let c={unused:0,active:0,expired:0};a.forEach(x=>c[x.state]=(c[x.state]||0)+1);$('total').textContent=a.length;$('unused').textContent=c.unused||0;$('active').textContent=c.active||0;$('expired').textContent=c.expired||0;
+$('rows').innerHTML=a.map(x=>`<tr><td><code>${esc(x.code_hint)}</code></td><td>${esc(x.vip_days)}</td><td>${dt(x.created_at)}</td><td>${dt(x.redeemed_at)}</td><td>${dt(x.vip_expiry)}</td><td><span class="badge ${esc(x.state)}">${esc(x.state)}</span></td><td class="hide-sm"><code>${esc((x.login_id_hash||'—').slice(0,14))}${x.login_id_hash?'…':''}</code></td></tr>`).join('')||'<tr><td colspan="7">No codes yet.</td></tr>'}
+async function gen(){let b=$('generate');if(b.disabled)return;b.disabled=true;b.textContent='Generating…';$('generated').textContent='';try{let d=Number($('days').value);let j=await api('/admin_generate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:d,count:1})});let c=j.codes&&j.codes[0];if(!c)throw Error('No plaintext code returned');$('generated').innerHTML=`<div class="generated"><div class="muted">New ${esc(j.days||d)}-day CGMANG code</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:7px"><span class="code">${esc(c)}</span><button id="copy">Copy Code</button></div><div id="copyMsg" class="muted" style="margin-top:8px">Copy it now. The persistent database record is masked.</div></div>`;$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(c);$('copy').textContent='Copied!';$('copyMsg').textContent='Code copied to clipboard.'}catch(e){$('copyMsg').textContent='Clipboard blocked; copy the code manually.'}};await load()}catch(e){$('generated').innerHTML='<div class="error">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Generate Code'}}
+$('connect').onclick=load;$('refresh').onclick=load;$('generate').onclick=gen;if($('key').value)load();
+</script></body></html>
