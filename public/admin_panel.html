@@ -1,54 +1,45 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JPCG Admin</title>
-<style>body{font-family:system-ui;background:#f5f6f8;margin:0}.w{max-width:1050px;margin:auto;padding:26px}.c{background:white;border:1px solid #ddd;border-radius:12px;padding:18px;margin:16px 0}.r{display:flex;gap:10px;flex-wrap:wrap}input,select,button{padding:10px;border-radius:8px;border:1px solid #bbb;font:inherit}input{flex:1}button{background:#202124;color:white}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}.hide{display:none}code{font-family:Consolas,monospace}.generated-box{margin-top:14px;padding:16px;border:1px solid #ddd;border-radius:10px;background:#f7f8fa}.generated-code{font-size:22px;font-weight:700;letter-spacing:.6px;display:inline-block;margin-right:10px}button:disabled{opacity:.55;cursor:not-allowed}</style></head>
-<body><div class="w"><h1>JPCG Admin</h1><p>Independent JPANL entitlement administration</p>
-<div class="c"><div class="r"><input id="key" type="password" placeholder="Admin key"><button onclick="connect()">Connect</button><button onclick="forget()">Forget key</button></div><p id="auth">Not connected.</p></div>
-<div id="panel" class="hide"><div class="c"><h3>Generate JPANL code</h3><div class="r"><select id="days"><option>1</option><option>7</option><option selected>30</option><option>60</option><option>90</option><option>365</option></select><button id="generateBtn" onclick="generate()">Generate Code</button></div><p id="gen"></p></div>
-<div class="c"><div class="r"><h3 style="flex:1">Codes</h3><select id="filter" onchange="render()"><option value="all">All</option><option>unused</option><option>active</option><option>expired</option></select><button onclick="refresh()">Refresh</button></div><p id="sum"></p>
-<table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Account hash</th></tr></thead><tbody id="rows"></tbody></table></div></div></div>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JPCG Garden Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f7f4ef;color:#303a32}
+.hero{background:linear-gradient(135deg,#315a43,#78966b);color:white;padding:38px 20px}
+.wrap{max-width:1050px;margin:auto}.hero h1{margin:0;font-size:32px}.hero p{margin:8px 0 0;opacity:.9}
+main{max-width:1050px;margin:-18px auto 40px;padding:0 18px}.card{background:#fff;border:1px solid #dfe6dd;border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px #26382b12}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.stat{background:#f2f7f1;border-radius:14px;padding:16px}.stat b{font-size:26px;display:block;color:#315a43}
+label{font-weight:700;font-size:13px}input,select{padding:11px;border:1px solid #cdd8cf;border-radius:10px;font-size:15px}button{padding:11px 16px;border:0;border-radius:10px;background:#315a43;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.55}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:6px}
+.generated{margin-top:15px;background:#edf6ed;border:1px solid #c7dac8;padding:17px;border-radius:14px}.code{font-family:Consolas,monospace;font-size:22px;font-weight:700;letter-spacing:.5px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #edf0ec}th{color:#68766b}.badge{padding:5px 9px;border-radius:99px;font-size:12px;font-weight:bold}.active{background:#e1f3e5;color:#28633a}.unused{background:#fff1ce;color:#765a12}.expired{background:#eee;color:#666}
+.muted{color:#748078;font-size:13px}.error{color:#a22}.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+@media(max-width:650px){.hero{padding-top:28px}.code{font-size:17px}table{font-size:12px}.hide-sm{display:none}}
+</style></head><body>
+<header class="hero"><div class="wrap"><h1>JPCG Garden Admin</h1><p>Membership code management • Independent JPCG service</p></div></header>
+<main>
+<section class="card"><div class="toolbar"><div><h2 style="margin:0">Admin access</h2><div class="muted">Your key is kept in this browser session only.</div></div>
+<div class="row"><div class="field"><label>Admin key</label><input id="key" type="password" placeholder="Enter admin key"></div><button id="connect">Connect</button></div></div><div id="accessMsg" class="muted"></div></section>
+
+<section id="dash" style="display:none">
+<div class="grid" style="margin-bottom:16px">
+<div class="stat"><span>Total codes</span><b id="total">0</b></div><div class="stat"><span>Unused</span><b id="unused">0</b></div>
+<div class="stat"><span>Active</span><b id="active">0</b></div><div class="stat"><span>Expired</span><b id="expired">0</b></div></div>
+
+<section class="card"><h2 style="margin-top:0">Generate JPANL code</h2><p class="muted">Generate one membership code at a time. Copy the full code immediately; stored records remain masked.</p>
+<div class="row"><div class="field"><label>Validity</label><select id="days"><option value="15">15 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select></div>
+<button id="generate">Generate Code</button></div><div id="generated"></div></section>
+
+<section class="card"><div class="toolbar"><div><h2 style="margin:0">Membership codes</h2><div class="muted">Up to the latest 200 records.</div></div><button id="refresh">Refresh</button></div>
+<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th class="hide-sm">Account hash</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+</section></main>
 <script>
-const $=x=>document.getElementById(x); let codes=[];
+const BASE='https://jpcg.onrender.com', $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=x=>x?new Date(Number(x)*1000).toLocaleString():'—';
 $('key').value=sessionStorage.getItem('jpcg_admin_key')||'';
-const headers=()=>({'X-Admin-Key':$('key').value.trim(),'Accept':'application/json'});
-async function api(url,o={}){o.headers={...(o.headers||{}),...headers()};let r=await fetch(url,o),j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Error('HTTP '+r.status+': '+(j.error||j.message||'request failed'));return j}
-async function connect(){try{let j=await api('/admin_codes.php');sessionStorage.setItem('jpcg_admin_key',$('key').value.trim());$('auth').textContent='Connected.';$('panel').classList.remove('hide');codes=j.codes||[];render()}catch(e){$('auth').textContent=e.message}}
-function forget(){sessionStorage.removeItem('jpcg_admin_key');$('key').value='';$('panel').classList.add('hide');$('auth').textContent='Key forgotten.'}
-async function refresh(){try{let j=await api('/admin_codes.php');codes=j.codes||[];render()}catch(e){$('sum').textContent=e.message}}
-function f(v){return v?new Date(Number(v)*1000).toLocaleString():'—'} function e(s){return String(s||'').replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))}
-function render(){let q=$('filter').value,a=codes.filter(c=>q==='all'||c.state===q);let n={unused:0,active:0,expired:0};codes.forEach(c=>n[c.state]=(n[c.state]||0)+1);$('sum').textContent=`${codes.length} total • ${n.unused||0} unused • ${n.active||0} active • ${n.expired||0} expired`;$('rows').innerHTML=a.map(c=>`<tr><td><code>${e(c.code_hint)}</code></td><td>${c.vip_days}</td><td>${f(c.created_at)}</td><td>${f(c.redeemed_at)}</td><td>${f(c.vip_expiry)}</td><td>${e(c.state)}</td><td><code>${e((c.login_id_hash||'—').slice(0,16))}${c.login_id_hash?'…':''}</code></td></tr>`).join('')}
-async function generate(){
-  const btn=$('generateBtn');
-  if(btn.disabled)return;
-  btn.disabled=true;
-  btn.textContent='Generating…';
-  $('gen').textContent='Generating one JPANL code…';
-  try{
-    const d=Number($('days').value);
-    const j=await api('/admin_generate.php',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({days:d,count:1})
-    });
-    const c=(Array.isArray(j.codes)&&j.codes.length)?j.codes[0]:'';
-    if(!c)throw Error('Generation succeeded but no plaintext code was returned.');
-    $('gen').innerHTML=`<div class="generated-box"><div>New ${j.days||d}-day code</div><div style="margin-top:8px"><span class="generated-code"><code>${e(c)}</code></span><button id="copyNew" type="button">Copy Code</button></div><div id="copyState" style="margin-top:8px">Copy this code now. The database keeps only its hash and masked hint.</div></div>`;
-    $('copyNew').onclick=async()=>{
-      const copyBtn=$('copyNew');
-      try{
-        await navigator.clipboard.writeText(c);
-        copyBtn.textContent='Copied!';
-        $('copyState').textContent='Code copied to clipboard.';
-        setTimeout(()=>copyBtn.textContent='Copy Code',1800);
-      }catch(x){
-        $('copyState').textContent='Clipboard access was blocked. Select and copy the code manually.';
-      }
-    };
-    await refresh();
-  }catch(e){
-    $('gen').textContent=e.message;
-  }finally{
-    btn.disabled=false;
-    btn.textContent='Generate Code';
-  }
-}
-if($('key').value)connect();
+async function api(path,opt={}){let k=$('key').value.trim();let h=Object.assign({'X-Admin-Key':k},opt.headers||{});let r=await fetch(BASE+path,Object.assign({},opt,{headers:h}));let j=await r.json().catch(()=>({}));if(!r.ok)throw Error('HTTP '+r.status+': '+(j.error||j.message||'request failed'));return j}
+async function load(){try{let j=await api('/admin_codes.php');sessionStorage.setItem('jpcg_admin_key',$('key').value.trim());$('dash').style.display='block';$('accessMsg').textContent='Connected.';render(j.codes||[])}catch(e){$('dash').style.display='none';$('accessMsg').innerHTML='<span class="error">'+esc(e.message)+'</span>'}}
+function render(a){let c={unused:0,active:0,expired:0};a.forEach(x=>c[x.state]=(c[x.state]||0)+1);$('total').textContent=a.length;$('unused').textContent=c.unused||0;$('active').textContent=c.active||0;$('expired').textContent=c.expired||0;
+$('rows').innerHTML=a.map(x=>`<tr><td><code>${esc(x.code_hint)}</code></td><td>${esc(x.vip_days)}</td><td>${dt(x.created_at)}</td><td>${dt(x.redeemed_at)}</td><td>${dt(x.vip_expiry)}</td><td><span class="badge ${esc(x.state)}">${esc(x.state)}</span></td><td class="hide-sm"><code>${esc((x.login_id_hash||'—').slice(0,14))}${x.login_id_hash?'…':''}</code></td></tr>`).join('')||'<tr><td colspan="7">No codes yet.</td></tr>'}
+async function gen(){let b=$('generate');if(b.disabled)return;b.disabled=true;b.textContent='Generating…';$('generated').textContent='';try{let d=Number($('days').value);let j=await api('/admin_generate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:d,count:1})});let c=j.codes&&j.codes[0];if(!c)throw Error('No plaintext code returned');$('generated').innerHTML=`<div class="generated"><div class="muted">New ${esc(j.days||d)}-day code</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:7px"><span class="code">${esc(c)}</span><button id="copy">Copy Code</button></div><div id="copyMsg" class="muted" style="margin-top:8px">Copy it now. The persistent database record is masked.</div></div>`;$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(c);$('copy').textContent='Copied!';$('copyMsg').textContent='Code copied to clipboard.'}catch(e){$('copyMsg').textContent='Clipboard blocked; copy the code manually.'}};await load()}catch(e){$('generated').innerHTML='<div class="error">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Generate Code'}}
+$('connect').onclick=load;$('refresh').onclick=load;$('generate').onclick=gen;if($('key').value)load();
 </script></body></html>
