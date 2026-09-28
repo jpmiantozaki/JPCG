@@ -1,18 +1,18 @@
-# JPCG CGMANG backend patch
+# Couple Garden Mobile Admin v1.6
 
-New code format:
-    CGMANG#########
+Deployment-ready visual update.
 
 Changes:
-- admin_generate.php now generates CGMANG + 9 digits only.
-- redeemvip.php accepts CGMANG + 9 digits.
-- Backward compatibility is retained for already-issued JPANL + 9 digit codes.
-- Existing database records do not need migration.
-- Existing active memberships are unaffected.
+- Added the original Couple Garden Mobile leaf/heart logo created for this project.
+- Added the logo to the green admin header.
+- Added a matching browser favicon.
+- Header subtitle now says "Independent CGM service".
+- Existing CGMANG generator, admin authentication, code table, and backend API behavior are unchanged.
+- No APK files are included or modified.
 
-Deploy:
-Replace only:
-    public/admin_generate.php
-    public/redeemvip.php
+Deploy these files together:
+    public/admin_panel.html
+    public/assets/cgm-logo.png
+    public/assets/favicon.png
 
-Do not replace _common.php or the database.
+Keep the assets folder structure exactly as shown.
