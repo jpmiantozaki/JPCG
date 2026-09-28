@@ -1,16 +1,18 @@
-JPCG Web Admin Panel v1.4
+# JPCG CGMANG backend patch
 
-Browser admin redesign only. This package does NOT modify the APK.
+New code format:
+    CGMANG#########
 
-Design direction:
-- garden-inspired visual presentation based on the user's supplied web references
-- original JPCG branding; no copied logos/art assets
-- pricing-style validity presets: 15 / 30 / 90 / 365 days
-- single-code generation only
-- prominent one-time plaintext display + Copy Code
-- summary cards and cleaner membership-code table
-- admin key remains in sessionStorage
-- existing backend endpoints and hash-only/masked database design are unchanged
+Changes:
+- admin_generate.php now generates CGMANG + 9 digits only.
+- redeemvip.php accepts CGMANG + 9 digits.
+- Backward compatibility is retained for already-issued JPANL + 9 digit codes.
+- Existing database records do not need migration.
+- Existing active memberships are unaffected.
 
 Deploy:
-Replace public/admin_panel.html in the admin web project and redeploy.
+Replace only:
+    public/admin_generate.php
+    public/redeemvip.php
+
+Do not replace _common.php or the database.
