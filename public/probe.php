@@ -2,10 +2,6 @@
 declare(strict_types=1);
 require __DIR__.'/_common.php';
 
-// CGM v0.5B passive authenticated-identity observer.
-// The APK sends only AUServerInfo.userInfo.szLoginID as data1.
-// data2 belongs to the base APK's pre-existing analytics URL shape and is ignored.
-// Never accept or log Audition password, PIN, session_key, ccukey, usersn, or Garden packets here.
 $login = value('data1');
 if ($login === '') {
     respond(['ok'=>false,'state'=>'ERROR','error'=>'missing_login_id'], 400);
@@ -31,7 +27,7 @@ if ($expiry <= 0) {
 }
 
 $hash = hash('sha256', $login);
-error_log('[CGM_V05B_OBSERVER] login_hash='.$hash.' status='.$state.' membership_expiry='.$expiry);
+error_log('[CGM_V05C_OBSERVER] login_hash='.$hash.' status='.$state.' membership_expiry='.$expiry);
 
 respond([
     'ok' => true,
