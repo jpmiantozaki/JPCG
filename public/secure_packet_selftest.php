@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__.'/_secure_packet.php';
-$raw='TEST~CGMANG123456789';
+$raw='TEST~MGANG123456789';
 $expected=[
   0=>'352730301b25262f222a2257535157515351595b:abcdef466c5b97dae23e7d69c0bda84b833e5c057a77d20',
   1=>'352730301b25262f222a2257535157515351595b:abcdef2a05f5070dd50e972df51f8ac10f23c5b5bc11671',

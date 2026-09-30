@@ -9,7 +9,7 @@ $out=[];
 
 for($i=0;$i<$count;$i++){
     do {
-        $code='CGMANG'.str_pad((string)random_int(0,999999999),9,'0',STR_PAD_LEFT);
+        $code='MGANG'.str_pad((string)random_int(0,999999999),9,'0',STR_PAD_LEFT);
         $hash=code_hash($code);
         $q=$db->prepare('SELECT 1 FROM codes WHERE code_hash=?');
         $q->execute([$hash]);

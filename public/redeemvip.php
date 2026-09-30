@@ -21,7 +21,7 @@ try {
     $code=strtoupper(trim((string)($parts[1]??'')));
 
     if($login==='') redeem_reply(true,'Missing login identifier');
-    if(!preg_match('/^CGMANG[0-9]{9}$/',$code)) redeem_reply(true,'Invalid membership code');
+    if(!preg_match('/^MGANG[0-9]{9}$/',$code)) redeem_reply(true,'Invalid membership code');
 
     $db=db();
     clean_sessions($db);
