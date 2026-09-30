@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "include": [
+    "/analytics.php",
+    "/authenticate.php",
+    "/redeemvip.php",
+    "/session.php",
+    "/verify.php"
+  ],
+  "exclude": []
+}
