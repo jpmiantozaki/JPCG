@@ -8,7 +8,7 @@ const ALLOWED_PATHS = new Set([
 
 // Phase 1 control target: reproduce the working modified APK's compatibility
 // service behavior through an API-capable Cloudflare hostname.
-const DEFAULT_UPSTREAM = "https://m.cabahug.xyz";
+const DEFAULT_UPSTREAM = "https://anlgarden.com";
 
 export async function onRequest(context) {
   const request = context.request;
