@@ -5,11 +5,12 @@ const ALLOWED_PATHS = new Set([
   "/session.php",
   "/verify.php",
   "/cgmchk.php",
+  "/__cgm_stage.php",
 ]);
 
 const DEFAULT_ANL_UPSTREAM = "https://anlgarden.com";
 const DEFAULT_CGM_UPSTREAM = "https://jpcg.onrender.com";
-const TRACE_VERSION = "stage2e-dual-entitlement-v1";
+const TRACE_VERSION = "stage2e-dual-entitlement-v2";
 
 function cleanForwardHeaders(request) {
   const headers = new Headers(request.headers);
@@ -18,32 +19,30 @@ function cleanForwardHeaders(request) {
   headers.delete("cf-ipcountry");
   headers.delete("cf-ray");
   headers.delete("cf-visitor");
-  headers.set("x-cgm-gateway", "wtn-pages-stage2e-dual");
+  headers.set("x-cgm-gateway", "wtn-pages-stage2e-dual-v2");
   return headers;
 }
 
 function responseHeaders(source, routeName) {
   const h = new Headers(source?.headers || {});
   h.set("cache-control", "no-store");
-  h.set("x-cgm-gateway", "wtn-pages-stage2e-dual");
+  h.set("x-cgm-gateway", "wtn-pages-stage2e-dual-v2");
   h.set("x-cgm-route", routeName);
   h.set("x-cgm-trace", TRACE_VERSION);
   return h;
 }
 
 function decryptProtectedForRouting(packet) {
-  // Client packet format recovered from the unchanged base APK:
-  // lowercase-hex(XOR(plaintext,key)) : 6-char-key + 40-char-checksum + switch
-  // We only decrypt enough to classify ANL's own verify result. We never alter
-  // or manufacture an ANL success response.
   if (typeof packet !== "string") return null;
   packet = packet.trim();
   const colon = packet.indexOf(":");
   if (colon <= 0) return null;
+
   const hex = packet.slice(0, colon);
   const trailer = packet.slice(colon + 1);
   if (!/^[0-9a-fA-F]+$/.test(hex) || (hex.length & 1) !== 0) return null;
   if (trailer.length < 47) return null;
+
   const key = trailer.slice(0, 6);
   if (key.length !== 6) return null;
 
@@ -52,6 +51,7 @@ function decryptProtectedForRouting(packet) {
     const b = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     out[i] = b ^ key.charCodeAt(i % key.length);
   }
+
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(out);
   } catch (_) {
@@ -62,16 +62,20 @@ function decryptProtectedForRouting(packet) {
 function classifyAnlVerify(body) {
   const plain = decryptProtectedForRouting(body);
   if (!plain) return "unreadable";
+
   try {
     const v = JSON.parse(plain);
     if (v && v.error === false) return "success";
+
     if (v && v.error === true) {
       const message = String(v.message || "").trim().toUpperCase();
-      // Fall back to CGM only for an explicit VIP entitlement denial.
       if (message === "VIP" || message.includes("VIP")) return "vip-denied";
       return "other-error";
     }
-  } catch (_) {}
+  } catch (_) {
+    return "unreadable";
+  }
+
   return "unreadable";
 }
 
@@ -81,7 +85,11 @@ async function forward(request, target) {
     headers: cleanForwardHeaders(request),
     redirect: "manual",
   };
-  if (request.method !== "GET" && request.method !== "HEAD") init.body = request.body;
+
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = request.body;
+  }
+
   return fetch(target.toString(), init);
 }
 
@@ -96,14 +104,36 @@ export async function onRequest(context) {
     });
   }
 
+  // Deployment-only health marker. It contains no account or protocol data.
+  // Check this before testing either account so an old Pages deployment cannot
+  // be mistaken for Stage 2E.
+  if (incoming.pathname === "/__cgm_stage.php") {
+    console.error(`[CGM_GATEWAY] trace=${TRACE_VERSION} path=/__cgm_stage.php route=stage-marker method=${request.method} status=200`);
+    return new Response(JSON.stringify({
+      ok: true,
+      stage: TRACE_VERSION,
+      gateway: "wtn-pages-stage2e-dual-v2",
+    }), {
+      status: 200,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store",
+        "x-cgm-gateway": "wtn-pages-stage2e-dual-v2",
+        "x-cgm-route": "stage-marker",
+        "x-cgm-trace": TRACE_VERSION,
+      },
+    });
+  }
+
   const anlOrigin = context.env.UPSTREAM_ORIGIN || DEFAULT_ANL_UPSTREAM;
   const cgmOrigin = context.env.CGM_REDEEM_ORIGIN || DEFAULT_CGM_UPSTREAM;
 
   try {
-    // Stage 2E: /cgmchk.php is a dual-entitlement router.
-    // 1) Ask ANL's real verify.php first.
-    // 2) Return an ANL success byte-for-byte to preserve official VIP.
-    // 3) Only an explicit ANL VIP denial may fall back to CGM membership.
+    // Stage 2E dual-entitlement decision:
+    //   - ask ANL's real verify.php first;
+    //   - preserve an ANL success response unchanged;
+    //   - only an explicit ANL VIP denial can fall back to CGM membership;
+    //   - unknown ANL failures remain ANL failures.
     if (incoming.pathname === "/cgmchk.php") {
       const anlTarget = new URL("/verify.php" + incoming.search, anlOrigin);
       const anl = await forward(request, anlTarget);
@@ -120,8 +150,6 @@ export async function onRequest(context) {
       }
 
       if (classification !== "vip-denied") {
-        // Conservative failure mode: never convert an unknown ANL error into
-        // CGM authorization. Return ANL's original response unchanged.
         console.error(`[CGM_GATEWAY] trace=${TRACE_VERSION} path=/cgmchk.php route=anl-verify-${classification} method=${request.method} status=${anl.status}`);
         return new Response(anlBody, {
           status: anl.status,
@@ -159,7 +187,7 @@ export async function onRequest(context) {
       headers: {
         "content-type": "text/plain; charset=utf-8",
         "cache-control": "no-store",
-        "x-cgm-gateway": "wtn-pages-stage2e-dual",
+        "x-cgm-gateway": "wtn-pages-stage2e-dual-v2",
         "x-cgm-route": "gateway-error",
         "x-cgm-trace": TRACE_VERSION,
       },
