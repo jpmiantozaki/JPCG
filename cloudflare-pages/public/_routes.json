@@ -5,7 +5,8 @@
     "/authenticate.php",
     "/redeemvip.php",
     "/session.php",
-    "/verify.php"
+    "/verify.php",
+    "/cgmchk.php"
   ],
   "exclude": []
 }
