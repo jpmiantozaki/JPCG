@@ -1,31 +1,72 @@
 <?php
+declare(strict_types=1);
 require __DIR__.'/_common.php';
-$login=value('login'); $code=strtoupper(value('code'));
-if($login==='') respond(relay(true,'Missing login identifier','',0,'',0),400);
-if(!preg_match('/^(?:CGMANG|JPANL)[0-9]{9}$/',$code)) respond(relay(true,'Invalid membership code','',0,'',0),400);
-$db=db(); clean_sessions($db); $db->beginTransaction();
+require __DIR__.'/_secure_packet.php';
+
+// IMPORTANT: the unchanged APK only decrypts/parses the body when the HTTP
+// response itself is successful. Therefore membership outcomes are returned
+// as protected MGRelayResponse payloads with HTTP 200; `error` carries the
+// logical success/failure state expected by the client.
+function redeem_reply(bool $error, string $message, int $expiry=0): never {
+    cgm_secure_respond(relay($error,$message,'',0,'',$expiry),200);
+}
+
 try {
- $q=$db->prepare('SELECT * FROM codes WHERE code_hash=? FOR UPDATE'); $q->execute([code_hash($code)]);
- $row=$q->fetch(PDO::FETCH_ASSOC);
- if(!$row){$db->rollBack(); respond(relay(true,'Invalid membership code','',0,'',0),404);}
- if($row['redeemed_at']!==null){
-   if((string)$row['login_id']!==$login){$db->rollBack(); respond(relay(true,'Membership code already redeemed','',0,'',0),409);}
-   $vip=(int)$row['vip_expiry'];
- } else {
-   $vip=time()+((int)$row['vip_days']*86400);
-   $u=$db->prepare('UPDATE codes SET redeemed_at=?,login_id=?,vip_expiry=? WHERE code_hash=? AND redeemed_at IS NULL');
-   $u->execute([time(),$login,$vip,code_hash($code)]);
-   if($u->rowCount()!==1){$db->rollBack(); respond(relay(true,'Redemption conflict','',0,'',0),409);}
- }
- if($vip<=time()){$db->rollBack(); respond(relay(true,'VIP expired','',0,'',0),403);}
- $session=token(); $data=token(18);
- $s=$db->prepare('INSERT INTO sessions(session,login_id,relay_data,stage,vip_expiry,session_expiry,created_at) VALUES(?,?,?,?,?,?,?)');
- $s->execute([$session,$login,$data,0,$vip,time()+SESSION_TTL,time()]);
- $db->commit();
- error_log('[JPCG_REDEEM] login_hash='.hash('sha256',$login).' session='.substr($session,0,8).'... returning='.($row['redeemed_at']!==null?'yes':'no'));
- respond(relay(false,'',$data,0,$session,$vip));
-} catch(Throwable $e){
- if($db->inTransaction()) $db->rollBack();
- error_log('[JPCG_REDEEM_ERROR] '.$e->getMessage());
- respond(relay(true,'Server error','',0,'',0),500);
+    $protected=value('data');
+    if($protected==='') redeem_reply(true,'Missing protected redemption data');
+
+    $raw=cgm_decrypt_packet($protected);
+    $parts=explode('~',$raw,2);
+    $login=trim((string)($parts[0]??''));
+    $code=strtoupper(trim((string)($parts[1]??'')));
+
+    if($login==='') redeem_reply(true,'Missing login identifier');
+    if(!preg_match('/^CGMANG[0-9]{9}$/',$code)) redeem_reply(true,'Invalid membership code');
+
+    $db=db();
+    clean_sessions($db);
+    $db->beginTransaction();
+
+    $q=$db->prepare('SELECT * FROM codes WHERE code_hash=? FOR UPDATE');
+    $q->execute([code_hash($code)]);
+    $row=$q->fetch(PDO::FETCH_ASSOC);
+    if(!$row){
+        $db->rollBack();
+        redeem_reply(true,'Invalid membership code');
+    }
+
+    $returning=$row['redeemed_at']!==null;
+    if($returning){
+        if((string)$row['login_id']!==$login){
+            $db->rollBack();
+            redeem_reply(true,'Membership code already redeemed');
+        }
+        $vip=(int)$row['vip_expiry'];
+    } else {
+        $vip=time()+((int)$row['vip_days']*86400);
+        $u=$db->prepare('UPDATE codes SET redeemed_at=?,login_id=?,vip_expiry=? WHERE code_hash=? AND redeemed_at IS NULL');
+        $u->execute([time(),$login,$vip,code_hash($code)]);
+        if($u->rowCount()!==1){
+            $db->rollBack();
+            redeem_reply(true,'Redemption conflict');
+        }
+    }
+
+    if($vip<=time()){
+        $db->rollBack();
+        redeem_reply(true,'VIP Membership has expired.');
+    }
+
+    $db->commit();
+    $days=max(1,(int)$row['vip_days']);
+    $message=$returning
+        ? 'VIP Membership is already active for this account.'
+        : "You've successfully activated {$days} Days VIP Membership.";
+
+    error_log('[CGM_REDEEM] login_hash='.hash('sha256',$login).' vip_expiry='.$vip.' returning='.($returning?'1':'0'));
+    redeem_reply(false,$message,$vip);
+} catch(Throwable $e) {
+    if(isset($db) && $db instanceof PDO && $db->inTransaction()) $db->rollBack();
+    error_log('[CGM_REDEEM_ERROR] '.$e->getMessage());
+    redeem_reply(true,'VIP Redemption Error. Please try again later.');
 }
