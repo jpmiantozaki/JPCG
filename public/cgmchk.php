@@ -57,4 +57,7 @@ error_log(sprintf(
 
 // Empty message + error=false makes the existing RelayVerifyVIP callback return
 // without changing the original non-VIP result already being shown by the APK.
-cgm_secure_respond(relay(false, '', '', 0, '', $expiry), 200);
+cgm_secure_respond(
+    relay(false, 'CGM_ACTIVE_TEST', '', 0, '', $expiry),
+    200
+);
