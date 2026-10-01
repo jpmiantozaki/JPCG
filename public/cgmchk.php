@@ -48,6 +48,13 @@ error_log(sprintf(
     $expiry
 ));
 
+error_log(sprintf(
+    '[CGM_STAGE2D_RESPONSE] login_hash=%s state=%s expiry=%d',
+    $loginHash !== '' ? $loginHash : 'unavailable',
+    $state,
+    $expiry
+));
+
 // Empty message + error=false makes the existing RelayVerifyVIP callback return
 // without changing the original non-VIP result already being shown by the APK.
 cgm_secure_respond(relay(false, '', '', 0, '', $expiry), 200);
