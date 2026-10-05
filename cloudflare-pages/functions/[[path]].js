@@ -4,13 +4,12 @@ const ALLOWED_PATHS = new Set([
   "/redeemvip.php",
   "/session.php",
   "/verify.php",
-  "/cgmchk.php",
   "/__cgm_stage.php",
 ]);
 
 const DEFAULT_ANL_UPSTREAM = "https://anlgarden.com";
 const DEFAULT_CGM_UPSTREAM = "https://jpcg.onrender.com";
-const TRACE_VERSION = "stage2e-dual-entitlement-v2";
+const TRACE_VERSION = "cgm-membership-lookup-v1";
 
 function cleanForwardHeaders(request) {
   const headers = new Headers(request.headers);
@@ -19,64 +18,17 @@ function cleanForwardHeaders(request) {
   headers.delete("cf-ipcountry");
   headers.delete("cf-ray");
   headers.delete("cf-visitor");
-  headers.set("x-cgm-gateway", "wtn-pages-stage2e-dual-v2");
+  headers.set("x-cgm-gateway", "cgm-membership-lookup-v1");
   return headers;
 }
 
 function responseHeaders(source, routeName) {
   const h = new Headers(source?.headers || {});
   h.set("cache-control", "no-store");
-  h.set("x-cgm-gateway", "wtn-pages-stage2e-dual-v2");
+  h.set("x-cgm-gateway", "cgm-membership-lookup-v1");
   h.set("x-cgm-route", routeName);
   h.set("x-cgm-trace", TRACE_VERSION);
   return h;
-}
-
-function decryptProtectedForRouting(packet) {
-  if (typeof packet !== "string") return null;
-  packet = packet.trim();
-  const colon = packet.indexOf(":");
-  if (colon <= 0) return null;
-
-  const hex = packet.slice(0, colon);
-  const trailer = packet.slice(colon + 1);
-  if (!/^[0-9a-fA-F]+$/.test(hex) || (hex.length & 1) !== 0) return null;
-  if (trailer.length < 47) return null;
-
-  const key = trailer.slice(0, 6);
-  if (key.length !== 6) return null;
-
-  const out = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < out.length; i++) {
-    const b = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-    out[i] = b ^ key.charCodeAt(i % key.length);
-  }
-
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(out);
-  } catch (_) {
-    return null;
-  }
-}
-
-function classifyAnlVerify(body) {
-  const plain = decryptProtectedForRouting(body);
-  if (!plain) return "unreadable";
-
-  try {
-    const v = JSON.parse(plain);
-    if (v && v.error === false) return "success";
-
-    if (v && v.error === true) {
-      const message = String(v.message || "").trim().toUpperCase();
-      if (message === "VIP" || message.includes("VIP")) return "vip-denied";
-      return "other-error";
-    }
-  } catch (_) {
-    return "unreadable";
-  }
-
-  return "unreadable";
 }
 
 async function forward(request, target) {
@@ -112,13 +64,13 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({
       ok: true,
       stage: TRACE_VERSION,
-      gateway: "wtn-pages-stage2e-dual-v2",
+      gateway: "cgm-membership-lookup-v1",
     }), {
       status: 200,
       headers: {
         "content-type": "application/json; charset=utf-8",
         "cache-control": "no-store",
-        "x-cgm-gateway": "wtn-pages-stage2e-dual-v2",
+        "x-cgm-gateway": "cgm-membership-lookup-v1",
         "x-cgm-route": "stage-marker",
         "x-cgm-trace": TRACE_VERSION,
       },
@@ -126,51 +78,14 @@ export async function onRequest(context) {
   }
 
   const anlOrigin = context.env.UPSTREAM_ORIGIN || DEFAULT_ANL_UPSTREAM;
-  const cgmOrigin = context.env.CGM_REDEEM_ORIGIN || DEFAULT_CGM_UPSTREAM;
+  const cgmOrigin = context.env.https://jpcg.onrender.com || DEFAULT_CGM_UPSTREAM;
 
   try {
-    // Stage 2E dual-entitlement decision:
-    //   - ask ANL's real verify.php first;
-    //   - preserve an ANL success response unchanged;
-    //   - only an explicit ANL VIP denial can fall back to CGM membership;
-    //   - unknown ANL failures remain ANL failures.
-    if (incoming.pathname === "/cgmchk.php") {
-      const anlTarget = new URL("/verify.php" + incoming.search, anlOrigin);
-      const anl = await forward(request, anlTarget);
-      const anlBody = await anl.text();
-      const classification = anl.ok ? classifyAnlVerify(anlBody) : "http-error";
-
-      if (classification === "success") {
-        console.error(`[CGM_GATEWAY] trace=${TRACE_VERSION} path=/cgmchk.php route=anl-verify-success method=${request.method} status=${anl.status}`);
-        return new Response(anlBody, {
-          status: anl.status,
-          statusText: anl.statusText,
-          headers: responseHeaders(anl, "anl-verify-success"),
-        });
-      }
-
-      if (classification !== "vip-denied") {
-        console.error(`[CGM_GATEWAY] trace=${TRACE_VERSION} path=/cgmchk.php route=anl-verify-${classification} method=${request.method} status=${anl.status}`);
-        return new Response(anlBody, {
-          status: anl.status,
-          statusText: anl.statusText,
-          headers: responseHeaders(anl, `anl-verify-${classification}`),
-        });
-      }
-
-      const cgmTarget = new URL("/cgmchk.php" + incoming.search, cgmOrigin);
-      const cgm = await forward(request, cgmTarget);
-      console.error(`[CGM_GATEWAY] trace=${TRACE_VERSION} path=/cgmchk.php route=cgm-after-anl-vip-denial method=${request.method} status=${cgm.status}`);
-      return new Response(cgm.body, {
-        status: cgm.status,
-        statusText: cgm.statusText,
-        headers: responseHeaders(cgm, "cgm-after-anl-vip-denial"),
-      });
-    }
-
     const isCgmRedeem = incoming.pathname === "/redeemvip.php";
-    const routeName = isCgmRedeem ? "cgm-redeem" : "anl-original";
-    const origin = isCgmRedeem ? cgmOrigin : anlOrigin;
+    const isCgmVerify = incoming.pathname === "/verify.php";
+    const routeName = isCgmRedeem ? "cgm-redeem"
+      : isCgmVerify ? "cgm-membership-verify" : "anl-original";
+    const origin = (isCgmRedeem || isCgmVerify) ? cgmOrigin : anlOrigin;
     const target = new URL(incoming.pathname + incoming.search, origin);
     const upstream = await forward(request, target);
 
@@ -181,13 +96,13 @@ export async function onRequest(context) {
       headers: responseHeaders(upstream, routeName),
     });
   } catch (error) {
-    console.error(`[CGM_GATEWAY_ERROR] trace=${TRACE_VERSION} path=${incoming.pathname} message=${String(error)}`);
+    console.error(`[CGM_GATEWAY_ERROR] trace=${TRACE_VERSION} path=${incoming.pathname} reason=upstream_failure`);
     return new Response("Upstream connection failed", {
       status: 502,
       headers: {
         "content-type": "text/plain; charset=utf-8",
         "cache-control": "no-store",
-        "x-cgm-gateway": "wtn-pages-stage2e-dual-v2",
+        "x-cgm-gateway": "cgm-membership-lookup-v1",
         "x-cgm-route": "gateway-error",
         "x-cgm-trace": TRACE_VERSION,
       },
