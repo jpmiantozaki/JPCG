@@ -78,7 +78,7 @@ export async function onRequest(context) {
   }
 
   const anlOrigin = context.env.UPSTREAM_ORIGIN || DEFAULT_ANL_UPSTREAM;
-  const cgmOrigin = context.env.https://jpcg.onrender.com || DEFAULT_CGM_UPSTREAM;
+  const cgmOrigin = context.env.CGM_REDEEM_ORIGIN || DEFAULT_CGM_UPSTREAM;
 
   try {
     const isCgmRedeem = incoming.pathname === "/redeemvip.php";
