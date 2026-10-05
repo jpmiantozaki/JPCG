@@ -1,4 +1,5 @@
 const ALLOWED_PATHS = new Set([
+  "/__cgm_backend.php",
   "/analytics.php",
   "/authenticate.php",
   "/redeemvip.php",
@@ -7,9 +8,9 @@ const ALLOWED_PATHS = new Set([
   "/__cgm_stage.php",
 ]);
 
-const DEFAULT_ANL_UPSTREAM = "https://anlgarden.com/";
+const DEFAULT_SESSION_BACKEND = "https://jpcg.onrender.com";
 const DEFAULT_CGM_UPSTREAM = "https://jpcg.onrender.com";
-const TRACE_VERSION = "cgm-response-diagnostic-v1";
+const TRACE_VERSION = "cgm-render-session-relay-v1";
 
 function cleanForwardHeaders(request) {
   const headers = new Headers(request.headers);
@@ -18,14 +19,14 @@ function cleanForwardHeaders(request) {
   headers.delete("cf-ipcountry");
   headers.delete("cf-ray");
   headers.delete("cf-visitor");
-  headers.set("x-cgm-gateway", "cgm-response-diagnostic-v1");
+  headers.set("x-cgm-gateway", "cgm-render-session-relay-v1");
   return headers;
 }
 
 function responseHeaders(source, routeName) {
   const h = new Headers(source?.headers || {});
   h.set("cache-control", "no-store");
-  h.set("x-cgm-gateway", "cgm-response-diagnostic-v1");
+  h.set("x-cgm-gateway", "cgm-render-session-relay-v1");
   h.set("x-cgm-route", routeName);
   h.set("x-cgm-trace", TRACE_VERSION);
   return h;
@@ -165,28 +166,29 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({
       ok: true,
       stage: TRACE_VERSION,
-      gateway: "cgm-response-diagnostic-v1",
+      gateway: "cgm-render-session-relay-v1",
       diagnostics_enabled: context.env.CGM_DIAGNOSTICS === "1",
     }), {
       status: 200,
       headers: {
         "content-type": "application/json; charset=utf-8",
         "cache-control": "no-store",
-        "x-cgm-gateway": "cgm-response-diagnostic-v1",
+        "x-cgm-gateway": "cgm-render-session-relay-v1",
         "x-cgm-route": "stage-marker",
         "x-cgm-trace": TRACE_VERSION,
       },
     });
   }
 
-  const anlOrigin = context.env.UPSTREAM_ORIGIN || DEFAULT_ANL_UPSTREAM;
+  const anlOrigin = context.env.UPSTREAM_ORIGIN || DEFAULT_SESSION_BACKEND;
   const cgmOrigin = context.env.CGM_REDEEM_ORIGIN || DEFAULT_CGM_UPSTREAM;
 
   try {
     const isCgmRedeem = incoming.pathname === "/redeemvip.php";
     const isCgmVerify = incoming.pathname === "/verify.php";
     const routeName = isCgmRedeem ? "cgm-redeem"
-      : isCgmVerify ? "cgm-membership-verify" : "anl-original";
+      : isCgmVerify ? "cgm-membership-verify"
+      : incoming.pathname === "/__cgm_backend.php" ? "cgm-backend-marker" : "cgm-session-bridge";
     const origin = (isCgmRedeem || isCgmVerify) ? cgmOrigin : anlOrigin;
     const target = new URL(incoming.pathname + incoming.search, origin);
     const upstream = await forward(request, target);
@@ -219,7 +221,7 @@ export async function onRequest(context) {
       headers: {
         "content-type": "text/plain; charset=utf-8",
         "cache-control": "no-store",
-        "x-cgm-gateway": "cgm-response-diagnostic-v1",
+        "x-cgm-gateway": "cgm-render-session-relay-v1",
         "x-cgm-route": "gateway-error",
         "x-cgm-trace": TRACE_VERSION,
       },
