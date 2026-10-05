@@ -7,7 +7,7 @@ const ALLOWED_PATHS = new Set([
   "/__cgm_stage.php",
 ]);
 
-const DEFAULT_ANL_UPSTREAM = "https://anlgarden.com";
+const DEFAULT_ANL_UPSTREAM = "https://jpcg.onrender.com/";
 const DEFAULT_CGM_UPSTREAM = "https://jpcg.onrender.com";
 const TRACE_VERSION = "cgm-response-diagnostic-v1";
 
