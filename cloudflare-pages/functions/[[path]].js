@@ -180,7 +180,7 @@ export async function onRequest(context) {
     });
   }
 
-  const anlOrigin = context.env.UPSTREAM_ORIGIN || DEFAULT_SESSION_BACKEND;
+  const anlOrigin = "https://jpcg.onrender.com";
   const cgmOrigin = context.env.CGM_REDEEM_ORIGIN || DEFAULT_CGM_UPSTREAM;
 
   try {
