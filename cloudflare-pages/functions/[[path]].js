@@ -180,8 +180,8 @@ export async function onRequest(context) {
     });
   }
 
-  const anlOrigin = "https://jpcg.onrender.com";
-  const cgmOrigin = context.env.CGM_REDEEM_ORIGIN || DEFAULT_CGM_UPSTREAM;
+const anlOrigin = "https://jpcg.onrender.com";
+const cgmOrigin = "https://jpcg.onrender.com";
 
   try {
     const isCgmRedeem = incoming.pathname === "/redeemvip.php";
