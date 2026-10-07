@@ -6,7 +6,8 @@
     "/redeemvip.php",
     "/session.php",
     "/verify.php",
-    "/__cgm_stage.php"
+    "/__cgm_stage.php",
+    "/__cgm_backend.php"
   ],
   "exclude": []
 }
