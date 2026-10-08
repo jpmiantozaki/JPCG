@@ -116,6 +116,21 @@ function cgm_session_response_summary(string $body): array
         'data_present' => isset($payload->data) && is_string($payload->data) && $payload->data !== '',
         'session_present' => isset($payload->session) && is_string($payload->session) && $payload->session !== '',
     ];
+    // Shapes and lengths only: never account identifiers, packet contents or tokens.
+    $data = $payload->data ?? null;
+    $session = $payload->session ?? null;
+    $hex = is_string($data) && $data !== '' && strlen($data) % 2 === 0 && ctype_xdigit($data);
+    $record['data_type'] = get_debug_type($data);
+    $record['data_bytes'] = is_string($data) ? strlen($data) : null;
+    $record['data_hex_valid'] = $hex;
+    $record['data_packet_bytes'] = $hex ? intdiv(strlen($data), 2) : null;
+    $record['session_type'] = get_debug_type($session);
+    $record['session_bytes'] = is_string($session) ? strlen($session) : null;
+    $serverType = $payload->servertype ?? null;
+    $record['servertype'] = is_int($serverType) && $serverType >= 0 && $serverType <= 255 ? $serverType : null;
+    $expiry = $payload->vip_expiry ?? null;
+    $record['vip_expiry_present'] = is_int($expiry);
+    $record['vip_expiry_positive'] = is_int($expiry) && $expiry > 0;
     // Success messages and unrelated response fields never enter the log.
     if ($error === true) {
         $record += cgm_session_error_message_summary($payload->message ?? null);
@@ -127,12 +142,18 @@ function cgm_log_session_response(string $body, int $status, string $upstreamHos
 {
     try {
         $record = [
-            'diagnostic' => 'cgm-session-response-v2',
+            'diagnostic' => 'cgm-session-contract-v3',
             'path' => '/session.php',
             'status' => $status,
             'upstream_host' => $upstreamHost,
             'body_bytes' => strlen($body),
         ] + cgm_session_response_summary($body);
+        // Link request stage to this response without logging the request itself.
+        $value = $_GET['data'] ?? $_POST['data'] ?? '';
+        $request = cgm_session_request_summary(is_string($value) ? $value : '');
+        $record['request_stage'] = $request['stage'] ?? null;
+        $record['request_packet_bytes'] = $request['packet_bytes'] ?? null;
+        $record['request_relay_session_present'] = $request['relay_session_present'] ?? null;
         error_log('[CGM_SESSION_RESPONSE] ' . json_encode($record, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
     } catch (Throwable $e) {
         error_log('[CGM_SESSION_RESPONSE] {"format":"unavailable","reason":"diagnostic_failure"}');
