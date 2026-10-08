@@ -15,8 +15,8 @@ for($i=0;$i<$count;$i++){
         $q->execute([$hash]);
     } while($q->fetchColumn());
 
-    $q=$db->prepare('INSERT INTO codes(code_hash,code_hint,vip_days,created_at) VALUES(?,?,?,?)');
-    $q->execute([$hash,substr($code,0,8).'****', $days,time()]);
+    $q=$db->prepare('INSERT INTO codes(code_hash,code_hint,code_full,vip_days,created_at) VALUES(?,?,?,?,?)');
+    $q->execute([$hash,substr($code,0,8).'****',$code,$days,time()]);
     $out[]=$code;
 }
 error_log('[JPCG_ADMIN_GENERATE] count='.$count.' days='.$days);

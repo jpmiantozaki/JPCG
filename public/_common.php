@@ -58,12 +58,15 @@ function db(): PDO {
     $pdo->exec('CREATE TABLE IF NOT EXISTS codes(
         code_hash TEXT PRIMARY KEY,
         code_hint TEXT NOT NULL,
+        code_full TEXT NULL,
         vip_days INTEGER NOT NULL,
         created_at BIGINT NOT NULL,
         redeemed_at BIGINT NULL,
         login_id TEXT NULL,
         vip_expiry BIGINT NULL
     )');
+    // Additive migration: existing codes and memberships remain intact.
+    $pdo->exec('ALTER TABLE codes ADD COLUMN IF NOT EXISTS code_full TEXT NULL');
     $pdo->exec('CREATE TABLE IF NOT EXISTS sessions(
         session TEXT PRIMARY KEY,
         login_id TEXT NOT NULL,

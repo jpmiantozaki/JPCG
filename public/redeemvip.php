@@ -44,8 +44,8 @@ try {
         $vip=(int)$row['vip_expiry'];
     } else {
         $vip=time()+((int)$row['vip_days']*86400);
-        $u=$db->prepare('UPDATE codes SET redeemed_at=?,login_id=?,vip_expiry=? WHERE code_hash=? AND redeemed_at IS NULL');
-        $u->execute([time(),$login,$vip,code_hash($code)]);
+        $u=$db->prepare('UPDATE codes SET redeemed_at=?,login_id=?,vip_expiry=?,code_full=? WHERE code_hash=? AND redeemed_at IS NULL');
+        $u->execute([time(),$login,$vip,$code,code_hash($code)]);
         if($u->rowCount()!==1){
             $db->rollBack();
             redeem_reply(true,'Redemption conflict');
@@ -55,6 +55,13 @@ try {
     if($vip<=time()){
         $db->rollBack();
         redeem_reply(true,'VIP Membership has expired.');
+    }
+
+    // Backfill a legacy full code only after a successful redemption by
+    // its bound account; do not change its original expiry.
+    if($returning && $row['code_full']===null){
+        $u=$db->prepare('UPDATE codes SET code_full=? WHERE code_hash=? AND code_full IS NULL');
+        $u->execute([$code,code_hash($code)]);
     }
 
     $db->commit();
