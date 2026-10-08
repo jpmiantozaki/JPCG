@@ -68,6 +68,15 @@ function cgm_session_bridge(string $endpoint): never
         || strlen($body) > 8 * 1024 * 1024 || $status < 200 || $status > 599) {
         cgm_bridge_failure($endpoint, 'response');
     }
+    // Diagnostics must never affect the upstream response or login decision.
+    if ($endpoint === 'session.php' && getenv('CGM_SESSION_DIAGNOSTICS') === '1') {
+        try {
+            require_once __DIR__ . '/_cgm_session_diagnostic.php';
+            cgm_log_session_response($body, $status, (string)$parts['host']);
+        } catch (Throwable $e) {
+            error_log('[CGM_SESSION_RESPONSE] {"format":"unavailable","reason":"diagnostic_failure"}');
+        }
+    }
     http_response_code($status);
     foreach ($responseHeaders as $line) header($line, false);
     header('Cache-Control: no-store');
