@@ -54,6 +54,8 @@ function cgm_session_error_message_summary(mixed $message): array
     }
     $normalized = strtolower(trim((string)preg_replace('/\s+/', ' ', $message)));
     $known = [
+        // Exact static marker checked by the unmodified session callback.
+        'vip' => 'upstream_vip_marker',
         'invalid username or password' => 'credentials_rejected',
         'invalid username or password.' => 'credentials_rejected',
         'incorrect username or password' => 'credentials_rejected',
@@ -125,7 +127,7 @@ function cgm_log_session_response(string $body, int $status, string $upstreamHos
 {
     try {
         $record = [
-            'diagnostic' => 'cgm-session-response-v1',
+            'diagnostic' => 'cgm-session-response-v2',
             'path' => '/session.php',
             'status' => $status,
             'upstream_host' => $upstreamHost,
