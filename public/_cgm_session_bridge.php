@@ -69,6 +69,14 @@ function cgm_session_bridge(string $endpoint): never
         cgm_bridge_failure($endpoint, 'response');
     }
     // Diagnostics must never affect the upstream response or login decision.
+    if ($endpoint === 'authenticate.php' && getenv('CGM_AUTH_CONFIG_DIAGNOSTICS') === '1') {
+        try {
+            require_once __DIR__ . '/_cgm_auth_config_diagnostic.php';
+            cgm_log_auth_config($body, $status);
+        } catch (Throwable $e) {
+            error_log('[CGM_AUTH_CONFIG] {"format":"unavailable","reason":"diagnostic_failure"}');
+        }
+    }
     if ($endpoint === 'session.php' && getenv('CGM_SESSION_DIAGNOSTICS') === '1') {
         try {
             require_once __DIR__ . '/_cgm_session_diagnostic.php';
