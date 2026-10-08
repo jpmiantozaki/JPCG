@@ -30,8 +30,9 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 
 <section class="card"><div class="toolbar"><div><h2 style="margin:0">Membership codes</h2><div class="muted">Up to the latest 200 records. Older codes show a masked hint until a successful redemption captures the full code.</div></div><button id="refresh">Refresh</button></div>
 <div class="field" style="margin-top:12px"><label for="search">Find account or code</label><input id="search" type="search" placeholder="Enter login email or membership code"></div>
+<div id="editMsg" class="muted" aria-live="polite" style="margin-top:8px"></div>
 <div id="matchCount" class="muted" aria-live="polite" style="margin-top:8px"></div>
-<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Login email / ID</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Login email / ID</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div></section>
 </section></main>
 <script>
 const BASE='https://jpcg.onrender.com', $=id=>document.getElementById(id);
@@ -44,8 +45,34 @@ let records=[];
 function render(a){records=a;let c={unused:0,active:0,expired:0};a.forEach(x=>c[x.state]=(c[x.state]||0)+1);$('total').textContent=a.length;$('unused').textContent=c.unused||0;$('active').textContent=c.active||0;$('expired').textContent=c.expired||0;
 renderRows()}
 function renderRows(){const term=$('search').value.trim().toLowerCase();const a=records.filter(x=>[x.login_id,x.code_full,x.code_hint].some(v=>String(v||'').toLowerCase().includes(term)));$('matchCount').textContent=term?`${a.length} matching records out of ${records.length} loaded.`:`${records.length} records loaded.`;
-$('rows').innerHTML=a.map(x=>`<tr><td><code>${esc(x.code_full||x.code_hint)}</code>${x.code_full?'':'<div class="muted">Full code not saved</div>'}</td><td>${esc(x.vip_days)}</td><td>${dt(x.created_at)}</td><td>${dt(x.redeemed_at)}</td><td>${dt(x.vip_expiry)}</td><td><span class="badge ${esc(x.state)}">${esc(x.state)}</span></td><td>${esc(x.login_id||'—')}</td></tr>`).join('')||'<tr><td colspan="7">No matching codes.</td></tr>'}
+$('rows').innerHTML=a.map(x=>`<tr><td><code>${esc(x.code_full||x.code_hint)}</code>${x.code_full?'':'<div class="muted">Full code not saved</div>'}</td><td>${esc(x.vip_days)}</td><td>${dt(x.created_at)}</td><td>${dt(x.redeemed_at)}</td><td>${dt(x.vip_expiry)}</td><td><span class="badge ${esc(x.state)}">${esc(x.state)}</span></td><td>${esc(x.login_id||'—')}</td><td>${x.redeemed_at!==null&&x.login_id&&x.code_id?`<button type="button" data-edit-id="${esc(x.code_id)}">Edit email</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="8">No matching codes.</td></tr>'}
 $('search').oninput=renderRows;
+$('rows').onclick=async event=>{
+    const button=event.target.closest('button[data-edit-id]');
+    if(!button||button.disabled)return;
+    const row=records.find(x=>x.code_id===button.dataset.editId);
+    if(!row)return;
+    const oldLogin=String(row.login_id||'');
+    const separator=oldLogin.lastIndexOf(':');
+    const prefix=separator<0?'':oldLogin.slice(0,separator+1);
+    const oldEmail=separator<0?oldLogin:oldLogin.slice(separator+1);
+    const entered=prompt('Enter the correct email used for the original account login. The account prefix and VIP expiry will stay the same.',oldEmail);
+    if(entered===null)return;
+    const email=entered.trim();
+    if(!email||email===oldEmail)return;
+    if(!/^[^\s@:]+@[^\s@:]+\.[^\s@:]+$/.test(email)){
+        $('editMsg').textContent='Enter the email only, without the account prefix.';return;
+    }
+    if(!confirm(`Move CGM code ${row.code_full||row.code_hint} from ${oldLogin} to ${prefix+email}? The existing expiry stays unchanged. This does not change the original game account.`))return;
+    button.disabled=true;$('editMsg').textContent='Saving email…';
+    try{
+        const saved=await api('/admin_edit_email.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code_id:row.code_id,expected_login_id:oldLogin,email})});
+        row.login_id=saved.login_id;renderRows();
+        $('editMsg').textContent='Email updated. VIP expiry is unchanged. Reopen CGM and log in with the correct original account.';
+    }catch(error){$('editMsg').textContent=error.message;}
+    finally{button.disabled=false;}
+};
+
 
 async function gen(){let b=$('generate');if(b.disabled)return;b.disabled=true;b.textContent='Generating…';$('generated').textContent='';try{let d=Number($('days').value);let j=await api('/admin_generate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:d,count:1})});let c=j.codes&&j.codes[0];if(!c)throw Error('No plaintext code returned');$('generated').innerHTML=`<div class="generated"><div class="muted">New ${esc(j.days||d)}-day CGMANG code</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:7px"><span class="code">${esc(c)}</span><button id="copy">Copy Code</button></div><div id="copyMsg" class="muted" style="margin-top:8px">This code is saved and available in the admin table.</div></div>`;$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(c);$('copy').textContent='Copied!';$('copyMsg').textContent='Code copied to clipboard.'}catch(e){$('copyMsg').textContent='Clipboard blocked; copy the code manually.'}};await load()}catch(e){$('generated').innerHTML='<div class="error">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Generate Code'}}
 $('connect').onclick=load;$('refresh').onclick=load;$('generate').onclick=gen;if($('key').value)load();
