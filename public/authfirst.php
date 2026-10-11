@@ -5,6 +5,7 @@ declare(strict_types=1);
 // Read-only CGM eligibility; never issues an official game session.
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/_cgm_membership.php';
+require_once __DIR__ . '/_authfirst_resolve.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, private');
 header('X-Content-Type-Options: nosniff');
@@ -51,7 +52,11 @@ if ($login !== trim($login) || strlen($login) < 1 || strlen($login) > 320 ||
     authfirst_reply('ERROR', 0, 400);
 }
 try {
-    $result = cgm_membership_lookup(db(), $login, time());
+    $pdo = db();
+    $now = time();
+    $result = authfirst_resolve($login, static function (string $candidate) use ($pdo, $now): array {
+        return cgm_membership_lookup($pdo, $candidate, $now);
+    });
     $state = (string)($result['state'] ?? 'ERROR');
     $expiry = (int)($result['vip_expiry'] ?? 0);
     if (!in_array($state, ['ACTIVE', 'EXPIRED', 'INACTIVE'], true)) {
