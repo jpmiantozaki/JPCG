@@ -38,6 +38,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 const BASE='https://jpcg.onrender.com', $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dt=x=>x?new Date(Number(x)*1000).toLocaleString():'—';
+// Presentation only: preserve the exact stored login_id for API calls.
+function splitLoginId(value){
+    const login=String(value||'');
+    if(login.startsWith('INPP.'))return {prefix:'INPP.',email:login.slice(5)};
+    const colon=login.lastIndexOf(':');
+    return colon<0?{prefix:'',email:login}:{prefix:login.slice(0,colon+1),email:login.slice(colon+1)};
+}
+const displayLoginId=value=>value?splitLoginId(value).email:'—';
 $('key').value=sessionStorage.getItem('jpcg_admin_key')||'';
 async function api(path,opt={}){let k=$('key').value.trim();let h=Object.assign({'X-Admin-Key':k},opt.headers||{});let r=await fetch(BASE+path,Object.assign({},opt,{headers:h}));let j=await r.json().catch(()=>({}));if(!r.ok)throw Error('HTTP '+r.status+': '+(j.error||j.message||'request failed'));return j}
 async function load(){try{let j=await api('/admin_codes.php');sessionStorage.setItem('jpcg_admin_key',$('key').value.trim());$('dash').style.display='block';$('accessMsg').textContent='Connected.';render(j.codes||[])}catch(e){$('dash').style.display='none';$('accessMsg').innerHTML='<span class="error">'+esc(e.message)+'</span>'}}
@@ -45,7 +53,7 @@ let records=[];
 function render(a){records=a;let c={unused:0,active:0,expired:0};a.forEach(x=>c[x.state]=(c[x.state]||0)+1);$('total').textContent=a.length;$('unused').textContent=c.unused||0;$('active').textContent=c.active||0;$('expired').textContent=c.expired||0;
 renderRows()}
 function renderRows(){const term=$('search').value.trim().toLowerCase();const a=records.filter(x=>[x.login_id,x.code_full,x.code_hint].some(v=>String(v||'').toLowerCase().includes(term)));$('matchCount').textContent=term?`${a.length} matching records out of ${records.length} loaded.`:`${records.length} records loaded.`;
-$('rows').innerHTML=a.map(x=>`<tr><td><code>${esc(x.code_full||x.code_hint)}</code>${x.code_full?'':'<div class="muted">Full code not saved</div>'}</td><td>${esc(x.vip_days)}</td><td>${dt(x.created_at)}</td><td>${dt(x.redeemed_at)}</td><td>${dt(x.vip_expiry)}</td><td><span class="badge ${esc(x.state)}">${esc(x.state)}</span></td><td>${esc(x.login_id||'—')}</td><td>${x.redeemed_at!==null&&x.login_id&&x.code_id?`<button type="button" data-edit-id="${esc(x.code_id)}">Edit email</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="8">No matching codes.</td></tr>'}
+$('rows').innerHTML=a.map(x=>`<tr><td><code>${esc(x.code_full||x.code_hint)}</code>${x.code_full?'':'<div class="muted">Full code not saved</div>'}</td><td>${esc(x.vip_days)}</td><td>${dt(x.created_at)}</td><td>${dt(x.redeemed_at)}</td><td>${dt(x.vip_expiry)}</td><td><span class="badge ${esc(x.state)}">${esc(x.state)}</span></td><td>${esc(displayLoginId(x.login_id))}</td><td>${x.redeemed_at!==null&&x.login_id&&x.code_id?`<button type="button" data-edit-id="${esc(x.code_id)}">Edit email</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="8">No matching codes.</td></tr>'}
 $('search').oninput=renderRows;
 $('rows').onclick=async event=>{
     const button=event.target.closest('button[data-edit-id]');
@@ -53,9 +61,7 @@ $('rows').onclick=async event=>{
     const row=records.find(x=>x.code_id===button.dataset.editId);
     if(!row)return;
     const oldLogin=String(row.login_id||'');
-    const separator=oldLogin.lastIndexOf(':');
-    const prefix=separator<0?'':oldLogin.slice(0,separator+1);
-    const oldEmail=separator<0?oldLogin:oldLogin.slice(separator+1);
+    const {prefix,email:oldEmail}=splitLoginId(oldLogin);
     const entered=prompt('Enter the correct email used for the original account login. The account prefix and VIP expiry will stay the same.',oldEmail);
     if(entered===null)return;
     const email=entered.trim();
@@ -63,7 +69,7 @@ $('rows').onclick=async event=>{
     if(!/^[^\s@:]+@[^\s@:]+\.[^\s@:]+$/.test(email)){
         $('editMsg').textContent='Enter the email only, without the account prefix.';return;
     }
-    if(!confirm(`Move CGM code ${row.code_full||row.code_hint} from ${oldLogin} to ${prefix+email}? The existing expiry stays unchanged. This does not change the original game account.`))return;
+    if(!confirm(`Move CGM code ${row.code_full||row.code_hint} from ${oldEmail} to ${email}? The existing expiry stays unchanged. This does not change the original game account.`))return;
     button.disabled=true;$('editMsg').textContent='Saving email…';
     try{
         const saved=await api('/admin_edit_email.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code_id:row.code_id,expected_login_id:oldLogin,email})});

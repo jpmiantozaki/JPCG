@@ -22,10 +22,16 @@ if (strlen($oldLogin)>1024 || strlen($email)>254 || !filter_var($email,FILTER_VA
     respond(['ok'=>false,'error'=>'Enter a valid login email without an account prefix'],400);
 }
 
-// Preserve the APK account namespace exactly, e.g. INPP:email@example.com.
-$separator=strrpos($oldLogin,':');
-$prefix=$separator===false?'':substr($oldLogin,0,$separator+1);
-$oldEmail=$separator===false?$oldLogin:substr($oldLogin,$separator+1);
+// Preserve the exact stored account namespace during email edits.
+// Historical records can use INPP.email@example.com or a colon-based namespace.
+if (str_starts_with($oldLogin, 'INPP.')) {
+    $prefix='INPP.';
+    $oldEmail=substr($oldLogin,5);
+} else {
+    $separator=strrpos($oldLogin,':');
+    $prefix=$separator===false?'':substr($oldLogin,0,$separator+1);
+    $oldEmail=$separator===false?$oldLogin:substr($oldLogin,$separator+1);
+}
 if (!filter_var($oldEmail,FILTER_VALIDATE_EMAIL)) {
     respond(['ok'=>false,'error'=>'This login ID is not an editable email'],400);
 }
