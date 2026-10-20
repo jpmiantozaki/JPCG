@@ -67,3 +67,36 @@ No public HTTP endpoint calls this adapter, and it cannot authorize
 a Garden session. Before any real identity binding, JPCG will need a
 server-verifiable identity result from an authorized PlayPark interface
 and an explicit policy mapping that result to the CGM redeemed identifier.
+
+## Phase 40F: exact official-identity binding boundary
+
+`IdentityBinding.php` defines an official identity verifier interface which
+is **unavailable by default**. A positive result from a *trusted* verifier is
+required to supply both a canonical account login and a stable account subject.
+The login must byte-match the *same exact* identifier used for the CGM codes
+lookup. No case folding or automatic `INPP.` alias conversion is allowed.
+
+`MembershipAdapter.php` now records the exact lookup login in the local
+staging state. This prevents membership lookup for account A and subsequent
+binding of a verified identity for unrelated account B.
+
+Offline tests use a fixture verifier **only in the test file**. They do not
+use official credentials, contact PlayPark, or prove that an official verifier
+exists. An APK-supplied email, `verified=true` flag, client-side success, or
+decrypted packet must not be treated as trusted server-verified identity.
+Do not pass PlayPark passwords to the `opaqueEvidence` parameter; a future
+verifier needs an approved, server-verifiable authentication assertion.
+
+Run:
+
+```sh
+php staging/phase40/test_identity_binding.php
+```
+
+Even matching fixture identities do not create authorized Garden sessions.
+No upstream session provider is integrated.
+
+The legacy `SessionState::confirmIdentity(array)` remains only for older
+offline tests. It must NEVER be wired directly to public client input.
+
+Production `public/` routes, Render, Cloudflare and Nox remain unchanged.
