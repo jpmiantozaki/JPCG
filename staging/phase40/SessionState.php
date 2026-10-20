@@ -20,6 +20,7 @@ final class CgmStagingSessionState
     private string $state = 'NEW';
     private int $expiresAt = 0;
     private ?string $subject = null;
+    private ?string $membershipLogin = null;
     private bool $providerIntegrated = false;
 
     public function __construct(private readonly int $createdAt) {}
@@ -27,6 +28,7 @@ final class CgmStagingSessionState
     public function state(): string { return $this->state; }
     public function expiresAt(): int { return $this->expiresAt; }
     public function subject(): ?string { return $this->subject; }
+    public function membershipLogin(): ?string { return $this->membershipLogin; }
 
     private function move(string $target): void
     {
@@ -36,7 +38,7 @@ final class CgmStagingSessionState
         $this->state = $target;
     }
 
-    public function confirmMembership(array $membership, int $now): void
+    public function confirmMembership(array $membership, int $now, ?string $lookupLogin = null): void
     {
         if ($this->state !== 'NEW') throw new LogicException('Membership already checked');
         // Source must be a trusted membership lookup; external request fields
@@ -47,6 +49,9 @@ final class CgmStagingSessionState
             $this->move('DENIED');
             return;
         }
+        // Record the exact identifier used by the trusted CGM lookup.
+        // This is not proof of PlayPark account ownership.
+        $this->membershipLogin = $lookupLogin;
         $this->move('MEMBERSHIP_CONFIRMED');
     }
 
