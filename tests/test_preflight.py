@@ -14,7 +14,7 @@ class Preflight(unittest.TestCase):
     def test_pages_allowlist_matches_routes(self):
         routes = json.loads(read("cloudflare-pages/public/_routes.json"))["include"]
         block = read("cloudflare-pages/functions/[[path]].js").split("const ALLOWED_PATHS = new Set([",1)[1].split("]);",1)[0]
-        paths = re.findall(r'"(/[^"\\n]+)"', block)
+        paths = re.findall(r'"(/[^"]+)"', block)
         self.assertEqual(set(routes), set(paths))
         self.assertEqual(len(routes), len(set(routes)))
     def test_membership_routes_dont_forward_to_original(self):
