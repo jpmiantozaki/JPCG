@@ -43,7 +43,7 @@ function cgm_staging_check_membership(
         $membership = $deny();
     }
 
-    $state->confirmMembership($membership, $now);
+    $state->confirmMembership($membership, $now, $login);
     return $state;
 }
 
