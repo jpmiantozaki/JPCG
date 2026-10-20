@@ -39,3 +39,31 @@ clock and dummy identities. No production environment variables are needed.
 
 Do **not** wire this module to production routes or promote to an authorizing
 implementation without those requirements and explicit review.
+
+
+## Phase 40D-E: state machine and real membership lookup boundary
+
+`SessionState.php` tracks local transitions without creating a game session.
+`MembershipAdapter.php` reuses `public/_cgm_membership.php` and its
+`cgm_membership_lookup(PDO, login, now)` database query via a staging-only
+PDO wrapper. This is the **existing CGM codes table**, not PlayPark identity
+verification. The adapter trims the claimed key, preserves case, refuses
+implicit `INPP.` alias fallback, rejects invalid input, checks the
+`CGM_MEMBERSHIP_ONLY` scope and fails closed on lookup exceptions.
+
+The reusable callable form permits offline testing. Tests use stand-in
+membership lookups, not the live CGM database. **There is no connected
+identity handoff yet**, and a claimed login/email still cannot prove ownership
+of the corresponding PlayPark account.
+
+Run these additional offline checks:
+
+```sh
+php staging/phase40/test_state.php
+php staging/phase40/test_membership_adapter.php
+```
+
+No public HTTP endpoint calls this adapter, and it cannot authorize
+a Garden session. Before any real identity binding, JPCG will need a
+server-verifiable identity result from an authorized PlayPark interface
+and an explicit policy mapping that result to the CGM redeemed identifier.
