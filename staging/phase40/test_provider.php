@@ -5,7 +5,7 @@ require __DIR__ . '/AuthorizedSessionProvider.php';
 function assertState(string $expected, array $actual): void {
     if (($actual['state'] ?? null) !== $expected
         || ($actual['authorized'] ?? null) !== false
-        || ($actual['session'] ?? 'unexpected') !== null
+        || (!array_key_exists('session', $actual) || $actual['session'] !== null)
         || ($actual['expires_at'] ?? -1) !== 0) {
         throw new RuntimeException('Expected denial ' . $expected . ', got: ' . json_encode($actual));
     }
