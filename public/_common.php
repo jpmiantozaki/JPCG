@@ -82,7 +82,8 @@ function db(): PDO {
 function code_hash(string $code): string { return hash('sha256', strtoupper($code)); }
 function admin_ok(): bool {
     $expected = getenv('JPCG_ADMIN_KEY') ?: '';
-    $provided = $_SERVER['HTTP_X_ADMIN_KEY'] ?? value('admin_key');
+    // Reject admin secrets in URLs and request bodies; use the existing admin header.
+    $provided = (string)($_SERVER['HTTP_X_ADMIN_KEY'] ?? '');
     return $expected !== '' && $provided !== '' && hash_equals($expected, $provided);
 }
 function relay(bool $error, string $message, string $data, int $type, string $session, int $expiry): array {
