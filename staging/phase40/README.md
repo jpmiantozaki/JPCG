@@ -100,3 +100,18 @@ The legacy `SessionState::confirmIdentity(array)` remains only for older
 offline tests. It must NEVER be wired directly to public client input.
 
 Production `public/` routes, Render, Cloudflare and Nox remain unchanged.
+
+
+## Phase 40G: membership provenance and trust gap
+
+See [PHASE40G_HANDOFF.md](PHASE40G_HANDOFF.md) for the recovered PC/mobile evidence, the exact `authfirst.php` and `verify.php` trust boundaries, and the remaining requirement for server-verifiable official identity evidence.
+
+`MembershipProvenance.php` records whether an ACTIVE CGM membership was found on the requested login ID or its `INPP.` prefix fallback, without equating those keys to PlayPark accounts. The staging precheck carries the *actual* selected codes-table key to the existing identity-binding boundary. Production `public/_authfirst_resolve.php` remains unchanged.
+
+Run the offline suite:
+
+```sh
+php staging/phase40/test_membership_provenance.php
+```
+
+No official login or independent upstream integration is claimed by these tests.
