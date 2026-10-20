@@ -115,3 +115,12 @@ php staging/phase40/test_membership_provenance.php
 ```
 
 No official login or independent upstream integration is claimed by these tests.
+
+
+## Phase 40H — Auth-First architecture correction and APK binary evidence
+
+See [PHASE40H_AUTH_FIRST_ARCHITECTURE.md](PHASE40H_AUTH_FIRST_ARCHITECTURE.md) and [PHASE40H_APK_BINARY_AUDIT.md](PHASE40H_APK_BINARY_AUDIT.md).
+
+Membership precheck is not official account authentication. The existing `authfirst.php` may determine eligibility to *attempt* the original login without JPCG verifying PlayPark credentials. The official LoginServer/GameServer/GardenServer must still authorize the account and session. These are distinct from the unresolved independent HTTP session relay.
+
+An offline scan of the experimental APK found localhost and legacy session/verify literals in Unity metadata but no exact `authfirst.php` or earlier named gate-class strings. This does **not** prove a gate is absent; it means we still lack an end-to-end demonstration that the actual APK enforces membership at credential submission.
