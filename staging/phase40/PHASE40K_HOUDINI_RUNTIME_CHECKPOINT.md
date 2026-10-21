@@ -218,3 +218,20 @@ Next feasibility question: can a temporary debugger **attach to this non-debugga
 
 ### Phase 40U limited next observation
 Temporarily attach and load a read-only host-side Frida JS agent using `Process.arch`, `Process.enumerateModules()` and `Process.findRangeByAddress(0x05811F20)` (only if independently rederived process base for this process). No Interceptor, Stalker, Memory.patchCode, writes, game method calls or credentials. Determine whether the original ARM64 guest mapping appears as a Frida module or merely as a raw memory range while host Houdini appears as an executable module. Stop and report if the address isn't mapped or platform differs; don't misrepresent host-architecture observation as guest method invocation proof.
+
+## Phase 40U — Frida x64 host-view observation PASSED (user report, 2026-10-21)
+
+Temporary Frida JS read-only script attached to CGM PID `3363` on Nox `127.0.0.1:62032`, observed values with `Process.arch`, `Process.findRangeByAddress(ptr('0x05811F20'))` and `Process.enumerateModules()`, then detached successfully. It installed **no Interceptor, Stalker, or Memory.patchCode** and made no CGM APK or authentication modifications.
+
+```json
+{
+  "phase": "40U", "architecture": "x64", "pid": 3363,
+  "candidate": "0x5811f20",
+  "candidateRange": {"base":"0x516c000","size":25206784,"protection":"r--","file":"/data/app/com.DeathToB.ANLGarden-JmT7p-3QsQH_pfbhWxQ9ew==/lib/arm64/libil2cpp.so"},
+  "modules":[{"name":"libhoudini.so","base":"0x754c713c3000","size":9793536,"path":"/system/vendor/lib64/libhoudini.so"}]
+}
+```
+
+Frida's process/module architecture is x64; ARM64 `libil2cpp.so` appears as a **file-backed guest memory range**, not as a Frida-enumerated host module, while `libhoudini.so` appears as the executable translator host module. Guest ELF mapped bytes/registered RVA are established, **but direct Frida Interceptor on the guest pointer is not established** and must not be attempted on this evidence alone. Detach succeeded; UI responsiveness was not independently confirmed.
+
+Possible bounded next research: query `libhoudini.so`'s public exported symbol list read-only for any documented guest mapping/tracing interface; lack of exports is inconclusive and must not prompt undocumented patching. Prefer publisher-approved source/plugin support for actual Auth-First gating and preserve upstream game authorization.
