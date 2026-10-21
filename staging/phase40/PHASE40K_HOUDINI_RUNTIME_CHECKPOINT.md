@@ -70,3 +70,30 @@ Observed console:
 - No live code modification, login function invocation, APK install, original credential packet, or backend network request.
 
 No proof of native execution or host-executable address ownership is claimed. Next: offline disassembly of the exact original non-auth UI method at RVA `0x6A5F20`; characterize the first instructions and their PC-/stack-relative effects. Do **not** borrow the single-NOP fixture trampoline for original Unity code.
+
+## Phase 40N — verified original UI method disassembly (user console, 2026-10-21)
+
+User ran offline llvm-objdump from verified APK / extracted ARM64 lib (no Nox access), using `--start-address=0x6A5F20 --stop-address=0x6A5F60 --no-show-raw-insn`. Exact output:
+
+```asm
+6a5f20: str  x22, [sp, #-0x30]!
+6a5f24: stp  x21, x20, [sp, #0x10]
+6a5f28: stp  x19, x30, [sp, #0x20]
+6a5f2c: adrp x22, 0x19d7000
+6a5f30: adrp x21, 0x18d1000
+6a5f34: ldrb w8, [x22, #0xa4e]
+6a5f38: ldr  x21, [x21, #0x4b0]
+6a5f3c: mov  w19, w1
+6a5f40: mov  x20, x0
+6a5f44: tbnz w8, #0x0, 0x6a5f5c
+6a5f48: adrp x0, 0x18d1000
+6a5f4c: ldr  x0, [x0, #0x4b0]
+6a5f50: bl   0x4c81ac
+6a5f54: mov  w8, #0x1
+6a5f58: strb w8, [x22, #0xa4e]
+6a5f5c: ldr  x0, [x21]
+```
+
+Interpretation: first 3 instructions save ABI registers and stack, first 16-byte overwrite window includes a PC-relative `ADRP` at +12. Later code has another `ADRP` and conditional/direct relative control flow. Hence Phase40L 1-NOP trampoline is not transplantable. A trampoline must preserve machine-state and retarget relocated `ADRP` for its original page and deal with instruction cache/Houdini and concurrent calls. Evidence is **static only**, not runtime detour safety, and says nothing about authorization/session validity.
+
+Next bounded offline investigation: disassemble from `0x6A5F20` up to but not including the mapped next method `0x6A6050`, checking branches and epilogue. Then consider a separate synthetic fixture that reproduces the relocation shape; do not patch the CGM method based on mapping alone.
