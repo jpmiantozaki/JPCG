@@ -208,3 +208,13 @@ Next feasibility question: can a temporary debugger **attach to this non-debugga
 - Windows Python `frida.get_device_manager().add_remote_device('127.0.0.1:27045')` connected; process enumeration returned `[(3363, 'ANL Garden')]` matching ADB CGM PID `3363`. Console `PASS: FRIDA CAN SEE THE ORIGINAL CGM PROCESS`.
 - **No Frida session attach**, agent injection, hook, game call, credential entry, packet modification or APK modification yet.
 - Next controlled gate: test Frida `device.attach(pid)` then `session.detach()` with no scripts; attachment itself can alter timing, suspend threads temporarily, or crash this translated non-debuggable app. Require fresh PID match and controlled one-time execution; don't claim guest IL2CPP call interception from mere attach.
+
+## Phase 40T — host debugger attach/detach PASSED (user-run 2026-10-21)
+
+- Disposable Nox `127.0.0.1:62032`, original CGM package `com.DeathToB.ANLGarden`, current CGM PID `3363`.
+- Frida Python 17.23.3 connected via dedicated remote forward at `127.0.0.1:27045`, enumerated target, ran `device.attach(3363)`, and then `session.detach()` inside finally; no agent scripts or hooks loaded.
+- Console confirmed: `PASS: CGM process confirmed`, `PASS: FRIDA SESSION ATTACHED`, `PASS: FRIDA SESSION DETACHED`, `PASS: CGM PROCESS STILL RUNNING`, `=== PHASE 40T COMPLETE ===`.
+- This proves debugger attachment and detach did not terminate the app in this one attempt; it **does not prove UI remained responsive**, guest ARM64 function observability, same CPU/thread identity, code-modification safety, CGM ACTIVE validation, or official authentication.
+
+### Phase 40U limited next observation
+Temporarily attach and load a read-only host-side Frida JS agent using `Process.arch`, `Process.enumerateModules()` and `Process.findRangeByAddress(0x05811F20)` (only if independently rederived process base for this process). No Interceptor, Stalker, Memory.patchCode, writes, game method calls or credentials. Determine whether the original ARM64 guest mapping appears as a Frida module or merely as a raw memory range while host Houdini appears as an executable module. Stop and report if the address isn't mapped or platform differs; don't misrepresent host-architecture observation as guest method invocation proof.
