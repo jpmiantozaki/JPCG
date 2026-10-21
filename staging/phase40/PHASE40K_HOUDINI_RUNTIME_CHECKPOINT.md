@@ -97,3 +97,40 @@ User ran offline llvm-objdump from verified APK / extracted ARM64 lib (no Nox ac
 Interpretation: first 3 instructions save ABI registers and stack, first 16-byte overwrite window includes a PC-relative `ADRP` at +12. Later code has another `ADRP` and conditional/direct relative control flow. Hence Phase40L 1-NOP trampoline is not transplantable. A trampoline must preserve machine-state and retarget relocated `ADRP` for its original page and deal with instruction cache/Houdini and concurrent calls. Evidence is **static only**, not runtime detour safety, and says nothing about authorization/session validity.
 
 Next bounded offline investigation: disassemble from `0x6A5F20` up to but not including the mapped next method `ShowSpinner(bool)` at `0x6A5FB8`, checking branches and epilogue. Then consider a separate synthetic fixture that reproduces the relocation shape; do not patch the CGM method based on mapping alone.
+
+## Phase 40O — remaining original UI method disassembly (user-run, 2026-10-21)
+
+Read-only llvm-objdump `0x6A5F60` through `0x6A5FB8` from previously verified native library. Important continuation:
+
+```asm
+6a5f60: ldr  x21,[x20,#0x30]
+6a5f64: ldr  w8,[x0,#0xe0]
+6a5f68: cbnz w8,0x6a5f70
+6a5f6c: bl   0x4c8288
+6a5f70: mov  x0,x21
+6a5f74: mov  x1,xzr
+6a5f78: mov  x2,xzr
+6a5f7c: bl   0x1099830
+6a5f80: tbz  w0,#0,0x6a5fa4
+6a5f84: ldr  x0,[x20,#0x30]
+6a5f88: cbz  x0,0x6a5fb4
+6a5f8c: and  w1,w19,#1
+6a5f90: ldp  x19,x30,[sp,#0x20]
+6a5f94: ldp  x21,x20,[sp,#0x10]
+6a5f98: mov  x2,xzr
+6a5f9c: ldr  x22,[sp],#0x30
+6a5fa0: b    0x1099a38
+6a5fa4: ldp  x19,x30,[sp,#0x20]
+6a5fa8: ldp  x21,x20,[sp,#0x10]
+6a5fac: ldr  x22,[sp],#0x30
+6a5fb0: ret
+6a5fb4: bl   0x4c82ac
+```
+
+Observations: real method has conditional branches, calls, a return, and a tail branch. `BL` at 0x6A5FB4 might be an error path but not independently proven. A 16-byte copied trampoline crosses PC-relative `ADRP` at +12, thus invalid without relocation logic.
+
+## Phase 40P — prepared separate fixture; not runtime validated
+
+Prepared new archive `Phase40P-EntryBranch-Fixture.zip` for Windows local build. It contains standalone zero-network ARM64 test APK source in package `com.cgm.phase40p.fixture`, using the successful Phase40L build/runner design but replacing its single NOP with matching first-three stack-save instructions and a fourth `ADRP x22` in a fixture-only method. Test modifies only the **first four-byte instruction**, then replays that original `STR x22,[sp,#-0x30]!` in a trampoline, returns to **target+4** where subsequent instructions (including `ADRP` at +12) execute at their original PC. The target's original function increments a private counter. Three cycles of 8 calls are checked. Builds only on user's Windows SDK; no live result yet. Independent cross-assembly sanity check showed first-three encodings `f81d0ff6 a90153f5 a9027bf3` and fourth `ADRP x22`. No modification of the CGM APK or its runtime intended by 40P.
+
+Limit: This fixture tests branch proximity and continuation shape inside its own ARM64 image only; real CGM code/hook ownership, runtime memory protections, thread safety, exact original-CGM calling context, membership checks, genuine upstream authorization, and garden access remain outstanding.
