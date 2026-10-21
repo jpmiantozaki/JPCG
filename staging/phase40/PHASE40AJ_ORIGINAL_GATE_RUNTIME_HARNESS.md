@@ -40,3 +40,17 @@ Build-only: toolchain discovers SDK/JDK, recompiles `libcgm_authfirst_gate.so` u
 After build PASS, assess APK package/hash and **separately** test installation/running only on disposable `127.0.0.1:62032`. The UI should report `ANDROID ART: PHASE 40AJ JNI POLICY PASS: 27/27 original JNI assertions using this runtime.` only upon actually executing the 27 synthetic tests on Android.
 
 A device PASS will prove the original isolated C membership gate + JNI wrapper + Java owner-thread wrapper work under Android ART. It **will not** prove a trusted HTTPS membership request, CGM ACTIVE on a real account, safe Unity owner-thread callback, original native `Login()`, third-party relay VIP authorization, or official game/Garden sessions. Phase40AF PathID4300 original `Login()` callback target PathID4610 remains unchanged. Nox62030/62031 protected.
+
+## User Windows NDK build result (2026-10-21)
+
+User ran the standalone Phase40AJ one-command PowerShell builder in `D:\CGMTEST\CGM_Phase40AJ_Real_Gate_Runtime_Test`. Reported builder output:
+
+- `=== PHASE 40AJ BUILD PASS ===`
+- APK: `app\build\outputs\apk\debug\app-debug.apk`
+- SHA256: `2AFA14ED4612B30D9F944056CE569AB1C413DCDD876F78FF39B5E1C0629D7487`
+- Package: `com.cgm.authfirst.ajtest`
+- ABI: `arm64-v8a`
+- Signature: verified
+- No ADB commands or device installation during build
+
+This demonstrates a user-side build and packaging/signing pass for the recovered native-gate test harness. Android runtime JNI tests **not yet performed**. Next controlled action: install exact hash on disposable Nox62032 only, launch `com.cgm.authfirst.ajtest.MainActivity`, and run the on-screen `TEST ORIGINAL 40AH JNI GATE` test. No production/Game/Garden authorization inference.
