@@ -60,3 +60,34 @@ Prior client Stage0 path `Login()` -> `SendLogin()` -> `RelayServerData()` -> ac
 Using original Ghidra project, navigate to **`Method$LoginServerManager.<OnPacketReceived>b__41_3()`** in listing/decompiler, using its method address from `dump.cs` / metadata XREF (do not guess RVA). Identify UI/error text and side effects for status 3. Then check **`b__41_9`/`b__10`** for fallback and **`b__41_2`** for connecting UI. Do not label status 3 'wrong password' without decompilation proof.
 
 **Acceptance checkpoint:** report exact mapping of status values to UI/error callbacks from static code and acknowledge which remain unresolved. No live wrong-password tests, raw credential packet captures, replay, fabricated success response, or modifying backend/ANLGarden gating required.
+
+## Phase 40Y follow-up — dump.cs and matching native ELF inspected directly (2026-10-21)
+
+User noted `dump.cs` is already in Library. Retrieved Library `dump.cs` (matching also `dump(1).cs`) and `cgmlibil2cpp.so`. Offline host `sha256sum` for `cgmlibil2cpp.so` is `fb569843b5955b0bbbebc143d5421942160d4dfe6f70cb7853e85cace8b02fc8`, matching previously confirmed CGM ARM64 library. No emulator access or live server traffic was needed.
+
+Original `dump.cs` callback RVAs and Ghidra addresses (`+0x00100000`):
+
+| Callback | ARM64 RVA | Ghidra VA | Direct native ELF finding |
+|--|--|--|--|
+| `LoginServerManager.<OnPacketReceived>b__41_2` | `0x6A8A80` | `0x007A8A80` | Reads a manager field at `+0x18` then tail-calls `PlayerPrefs.SetString(string,string)` at `0x10920A8`; **do not assume popup** |
+| `LoginServerManager.<OnPacketReceived>b__41_3` | `0x6A8AD8` | `0x007A8AD8` | Direct unconditional branch `b 0x6A86B4` (`DisconnectFromServer`) |
+| `LoginServerManager.<OnPacketReceived>b__41_5` | `0x6A8ADC` | `0x007A8ADC` | Direct unconditional branch `b 0x6A86B4` |
+| `LoginServerManager.<OnPacketReceived>b__41_7` | `0x6A8AE0` | `0x007A8AE0` | Direct unconditional branch `b 0x6A86B4` |
+| `LoginServerManager.<OnPacketReceived>b__41_8` | `0x6A8AE4` | `0x007A8AE4` | Formats/uses manager field at `+0x18` and calls `MessageBoxManager.ShowMessage` at `0x65662C` (exact message content unknown) |
+| `LoginServerManager.<OnPacketReceived>b__41_9` | `0x6A8BA0` | `0x007A8BA0` | Direct unconditional branch `b 0x6A86B4` |
+| `LoginServerManager.<>c.<OnPacketReceived>b__41_4` | `0x6A9610` | `0x007A9610` | Calls `MessageBoxManager.ShowMessage` on a metadata-defined string constant; exact content unknown |
+| `LoginServerManager.<>c.<OnPacketReceived>b__41_6` | `0x6A968C` | `0x007A968C` | Calls `MessageBoxManager.ShowMessage` on another metadata-defined string constant |
+| `LoginServerManager.<>c__DisplayClass41_0.<OnPacketReceived>b__1` | `0x6A9708` | `0x007A9708` | Reads `byErrorCode` at object `+0x10`, converts byte to string and shows it via `MessageBoxManager.ShowMessage` |
+| `LoginServerManager.<>c__DisplayClass41_0.<OnPacketReceived>b__10` | `0x6A97B4` | `0x007A97B4` | Reads `byLoginCode` at object `+0x11`, converts byte to string and shows it via `MessageBoxManager.ShowMessage` |
+
+`MessageBoxManager.ShowMessage(string,bool)` address is also checked against `dump.cs` at `0x65662C` and `PlayerPrefs.SetString` at `0x10920A8`. The native `DisconnectFromServer` method at `0x6A86B4` calls `ShowLoginButton(true)` at `0x6A5F20`, disables a UI object through `GameObject.SetActive(false)`, then `DisconnectFromLoginServer()`.
+
+**Updated status handling grounded by user-supplied parent callback and exact ELF:**
+- Login packet result `0`: saves account/session/game-server fields, triggers `b__41_2`, calls original `ConnectToGameServer`, disconnects LoginServer (normal handoff).
+- Result `3`: `b__41_3 -> DisconnectFromServer`, `b__41_4 -> ShowMessage(literal)`. The literal is not yet resolved, so do not label `3` wrong-password error yet.
+- Result `6`: `b__41_5 -> DisconnectFromServer`, `b__41_6 -> ShowMessage(other literal)`.
+- Result `14`: `b__41_7 -> DisconnectFromServer`, `b__41_8 -> ShowMessage(dynamic manager text)`.
+- Other results: `b__41_9 -> DisconnectFromServer`, `b__10 -> ShowMessage(numeric result)`.
+- This is **official LoginServer packet result handling**, separate from upstream third-party `VIP` error at `RelayServerData` HTTP callback and CGM membership `authfirst.php`.
+
+This checkpoint resolves the callback *addresses and native actions* without requiring the user to search `dump.cs` or take new screenshots. Remaining useful but narrower question is mapping string constants for result `3`/`6` to exact popup text; optional read-only metadata inspection can do this. No fabricated or bypassed server results.
