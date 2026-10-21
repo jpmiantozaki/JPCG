@@ -35,3 +35,13 @@ A successful synthetic test proves only reversible branching of the fixture's wa
 ## Phase 40L candidate
 
 Implement a distinct **fixture-only** pass-through test: exercise a safe trampoline preserving original side effects and return value, repeated warm/call/unhook cycles; verify all active threads and restoration, and fail-closed on unexpected page or ABI state. No CGM login or production network. Only after isolated proof evaluate whether a supported integration route exists in the compiled APK, with explicit callback coverage and session dependency addressed separately.
+
+## Phase 40L — isolated ARM64 pass-through experiment PASSED (user-reported, 2026-10-21)
+
+- New fixture package `com.cgm.phase40l.fixture`, installed **only** to `127.0.0.1:62032`; CGM and earlier instances unchanged. Local signed APK SHA-256 `00FC6382FC150878D71676B0F8D9FC4613873D6BF0D04A6E79E19C7D96A7EBCC`. Signature verified with APK v2/v3.
+- Process log PID `6051` tag `CGM40LFixture`: `PASSTHROUGH_TRAMPOLINE_VERIFIED`; initial/warmed `7/7`; **3 of 3** cycles, **24** pass-through calls, **24** hook calls; original counter **1,028**; restored bytes `yes`, target still modified `no`; protection before `1`, page `4096`, errno `0`; `PASS: YES`.
+- The 1,028 original calls reconcile with fixture source: 1 baseline + 1,000 warmups + 24 hook-to-original continuations + 3 post-restore checks. No unexplained extra original calls.
+- Source intentionally overwrites **one NOP** at synthetic `fixture_target()`. Its trampoline copies the NOP and executes a literal-load/indirect branch to `target+4`; hook increments its own counter, then calls trampoline; cleanup restores target bytes. This demonstrates *that exact simple original continuation shape*, not relocation of arbitrary instructions, actual Unity/IL2CPP method prologues, multi-threading, or executable page patching inside the installed CGM app.
+- No CGM game code, official authentication, upstream packets, credential fields, session access or Garden state touched. This establishes only local guest translated fixture behavior, not a deployable Auth-First APK.
+
+**Next engineering gate:** First identify a controlled, *non-authentication* original Unity callback that can be observed safely without altering game behavior; demonstrate ownership/thread/ABI and restoration strategy before considering interception. There is no justification to patch live `Login()` or `SendLogin()` based only on 40K/40L. A compliant source-level authorization gate remains preferable whenever integration artifacts are available.
