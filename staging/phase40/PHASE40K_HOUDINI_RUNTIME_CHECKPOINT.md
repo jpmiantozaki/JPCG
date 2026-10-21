@@ -45,3 +45,11 @@ Implement a distinct **fixture-only** pass-through test: exercise a safe trampol
 - No CGM game code, official authentication, upstream packets, credential fields, session access or Garden state touched. This establishes only local guest translated fixture behavior, not a deployable Auth-First APK.
 
 **Next engineering gate:** First identify a controlled, *non-authentication* original Unity callback that can be observed safely without altering game behavior; demonstrate ownership/thread/ABI and restoration strategy before considering interception. There is no justification to patch live `Login()` or `SendLogin()` based only on 40K/40L. A compliant source-level authorization gate remains preferable whenever integration artifacts are available.
+
+## Phase 40M — original CGM non-auth read-only method anchor (prepared, not executed)
+
+The next concrete phase is **not yet another synthetic APK**. It anchors the already-mapped `LoginServerManager.ShowLoginButton(bool)` UI-only method at native ARM64 RVA `0x6A5F20` in the real CGM process on Nox `127.0.0.1:62032`, without modifying or invoking any native game method. This method controls visibility/display state rather than credential submission. It is not `Login()`, `SendLogin()` or `ConnectToServer()`.
+
+Source image: original `libil2cpp.so` SHA-256 `fb569843b5955b0bbbebc143d5421942160d4dfe6f70cb7853e85cace8b02fc8` shared across relevant CGM native builds. File bytes at RVA 0x6A5F20 are `f60f1df8f55301a9f37b02a9969900d0`, **real instructions, not the one-NOP fixture**. Any future trampoline needs instruction-specific relocation/ABI and concurrency proof; the fixture trampoline must not be transplanted.
+
+Prepared artifact: `Phase40M-ReadOnly-CGM-Anchor.zip` with `Run-Only-62032.ps1`. Its guarded script checks the exact original CGM APK hash `44b89aa390734b2d05705a20620d6175e298ed790d88734d245e87d98ac00944`, validates native SHA and prologue offline, then reads only `get-state`, `pidof`, and `/proc/<pid>/maps` for `62032`. It derives a candidate **guest image address** relative to that process's mapped ELF base and emits a local JSON report. No runtime test result is claimed until user returns output. This is an anchor/mapping checkpoint, **not observed execution and not an inline hook**. All production and rollback environments untouched.
