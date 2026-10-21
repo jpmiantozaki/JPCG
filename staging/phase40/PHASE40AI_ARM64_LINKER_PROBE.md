@@ -44,3 +44,15 @@ PowerShell on Windows in `D:\CGMTEST\CGM_Phase40AI_ARM64_Linker_Probe` ran `scri
 - **Not** yet built as APK, installed on Nox62032, or exercised through ART/JNI. Test C library is a harmless dummy probe, not Phase40AH membership gate.
 
 **Next gate:** Build standalone debug APK (app ID `com.cgm.authfirst.abi_probe`), inspect APK contents and declared ABI `arm64-v8a` before a carefully targeted install on disposable `127.0.0.1:62032`. Do not use 62030 or 62031. Do not modify the original CGM/Unity CONFIRM button.
+
+## User-side signed APK and Nox62032 runtime result (2026-10-21)
+
+- User's one-command local build succeeded, signing was verified; APK `app-debug.apk` SHA256 `863A40D0897E96C09E716B1947E68D969546931F77170653393A171C72BB31E5`.
+- Package name `com.cgm.authfirst.abi_probe`, native ABI `arm64-v8a`; standalone test APK (not the CGM game client).
+- ADB `-s 127.0.0.1:62032 install -r` returned literal **Success**.
+- First user screenshot shows isolated app text: **"PROBE PASS: Android loaded ARM64 ELF, accepted JNI_OnLoad, and executed a JNI method. This does NOT prove the actual CGM membership library or Unity callback works."**
+- Second screenshot shows the same app in its *initial* pre-button-press state, not a contradictory runtime failure.
+- **Phase40AI isolated ARM64/JNI execution: PASS based on user screenshots.** The pictured success screen does not show the numeric test marker itself; the app's success display is the evidence of dummy JNI invocation.
+- Actual Phase40AH CGM gate, HTTPS membership validation, and real Unity CONFIRM callback execution remain **NOT TESTED**. Avoid claiming a working CGM/Auth-First APK, reassigning upstream VIP/official game decisions, or modifying Nox62030/62031.
+
+**Next milestone:** recover the Phase40AH `cgm_gate_jni.c` / `NativeGate.java` / `cgm_gate_begin/reply/take/cancel` source or explicitly reimplement it with independent equivalence tests if unrecoverable, then test real JNI gate in the already-proven isolated ART environment. Only after that investigate authorized, verifiable Unity-side callback replacement with original Login() preserved.
