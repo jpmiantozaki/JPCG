@@ -161,3 +161,16 @@ Source requests `ADRP X22, fixture_original_body; ADD X22, X22, :lo12:fixture_or
 Reproduced the same C/assembly transformation in a local LLVM 17 AArch64 ELF shared-library toolchain, and verified `-Wl,--no-relax` retained the expected `ADRP X22; ADD` pair. **Not** yet built under the user's Windows NDK.
 
 Prepared dedicated R1 archive `Phase40P-R1-NoRelax-Fixture.zip`, a *separate* package `com.cgm.phase40pr1.fixture`, no Internet permission. It changes clang link flags to include `-Wl,--no-relax` and adds a **build-time disassembler assertion** for exact `STR; STP; STP; ADRP X22`. Build fails before APK signing if relaxed or altered. Its runner uses explicit serial `127.0.0.1:62032`, refuses an existing R1 package, and doesn't access/replace the previous Phase40P/CGM apps. R1 build and actual Nox test **not yet run**.
+
+## Phase 40P-R1 — separate Nox fixture execution PASSED (user-provided, 2026-10-21 16:24:47)
+
+The local user corrected PowerShell build-script parsing around `-Wl,--no-relax` and signed `UInt32` hexadecimal literal conversion. Compiled preflight then verified all three stack-save instruction words and `ADRP X22` as the fourth instruction. ARM64 library and Android APK built and v2/v3 signing verified.
+
+- Signed no-network standalone test APK `Phase40PR1-Fixture-signed.apk` SHA-256 `994FEBCF218EEC7C17DD3BC939F582EFED9CDEDE37B5B20707A45A4F0373911A`.
+- Explicitly installed on disposable Nox `127.0.0.1:62032` as `com.cgm.phase40pr1.fixture`, process PID `8985`.
+- Actual `CGM40PR1Fixture` log: `SINGLE_INSTRUCTION_ENTRY_CONTINUATION_VERIFIED`, `Prologue 3 stack saves and ADRP x22: yes`, fixture initial/warmed `7 / 7`.
+- **3/3** cycles; **24** pass-through calls, **24** hook calls; original calls **1028** (1 baseline + 1000 warmups + 24 via trampoline + 3 after restore).
+- `Restored bytes: yes; target still modified: no`; original protection before `1`, page size `4096`, errno `0`; `PASS: YES`. No CGM code or login modified.
+- Demonstrates a **single overwritten stack-save instruction** replayed in a trampoline followed by continuation at target+4, with fixture's PC-relative `ADRP` remaining at original address. Does *not* prove guest patching of original `libil2cpp.so`, safe runtime attachment/injection, page manipulation in game app, concurrent entrypoint callers, or actual CGM membership gating.
+
+Next narrow original-app checkpoint: read and compare the four live target prologue words under a running 62032 CGM process from `/proc/<pid>/mem` **read only**, distinguish memory-read restrictions from mismatched executable image. No live patch until both runtime bytes and ownership/ABI/concurrency strategy can be justified.
