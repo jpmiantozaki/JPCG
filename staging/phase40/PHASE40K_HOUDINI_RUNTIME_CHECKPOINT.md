@@ -188,3 +188,14 @@ This establishes the **identity of live guest-mapped bytes** at the expected non
 ### Phase 40R direction
 
 Stop further repeat fingerprint/disassembly/synthetic checks; those gates now have evidence. The next responsible integration checkpoint is to settle a **supported, owner-approved deployment mechanism** for the original CGM APK, preserve official authentication and fail-closed eligibility behavior, and design a *non-auth, reversible test on a disposable backup* only when memory protection, cache, thread coordination, restore-on-crash, and ABI conditions can be demonstrated. No live patch against `Login()`/`SendLogin()` is justified by these fixture results alone.
+
+## Phase 40R — original CGM process instrumentation environment (2026-10-21; user-provided ADB)
+
+Read-only scan on disposable Nox `127.0.0.1:62032` while original CGM is running at PID `3363`, targeting package `com.DeathToB.ANLGarden`. No package, server or authentication changes:
+- `ro.debuggable=0`; package `flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]`, **no** `DEBUGGABLE` flag. Ordinary `run-as` debugger access must not be assumed.
+- SELinux `Permissive`; process `TracerPid=0`, `Threads=47`, `NoNewPrivs=0`, `Seccomp=0`; `Uid=10055`; root observed in earlier 62032 scan.
+- Process `libil2cpp.so` guest ELF r--p mappings still at `0x0516C000`, `0x06976000`, `0x06A57000`; host `libhoudini.so` r-xp at `0x754c713c3000` in this process.
+- `ps -A` did not show `frida`, `gdbserver` or `lldb-server` process names at inspection time. No live instrumentation installed/proven.
+- **Decision:** A live guest-byte match (40Q) plus synthetic trampolines (40P-R1) does not imply that attaching to Houdini or patching game code is safe: translated host code and guest ELF guest-address mappings differ, 47 threads demand synchronization, and unknown translated-cache behavior requires explicit proof. Do not use direct patching of `ShowLoginButton`, `Login` or `SendLogin` as the next automatic step.
+
+Next feasibility question: can a temporary debugger **attach to this non-debuggable, rooted, test-only CGM process** and report process/module/thread metadata without installing any Interceptor and without modifying the original APK? This is a host-ABI observation only and must not be represented as guest method invocation tracing. Any actual guest-method call observation will require a further independently validated mechanism or supported source/SDK integration.
