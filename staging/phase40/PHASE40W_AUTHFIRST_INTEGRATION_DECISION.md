@@ -48,3 +48,14 @@ Attaching Frida to x64 Houdini is not that extension. Redirecting native `Login(
 - Reproducible signed APK test on disposable Nox 62032 and documented rollback, without touching 62030 or 62031.
 
 **Current missing input:** provider/source-extension access and the provider's approval that a CGM membership grant can be used as the permitted pre-login eligibility criterion. Do not infer these permissions from a working synthetic trampoline.
+
+## User clarification — binary-only CGM target; no official ANLGarden release (2026-10-21)
+
+The user states explicitly:
+- No current access to the original **BASE or MOD APKs**. Do not ask for these as a prerequisite to continue, and do not assume they are present on the Windows host despite historical references.
+- There is **no official ANLGarden/CGM mobile release**. ANLGarden was independently made as a **third-party phone access tool** for an existing Garden server, not as an official PlayPark-developed mobile client.
+- The installed **CGM APK** on disposable Nox `127.0.0.1:62032` was identified and verified in Phases 40J–40Q and remains the local experimental binary target.
+
+**Decision correction:** do not imply that a first-party ANLGarden SDK or an official ANLGarden release ought to be obtainable or is necessary for research. Continue *binary-only compatibility and integration feasibility* on the CGM APK only, in disposable testing and without modifying original servers. Source- or extension-based integration is an alternative **if actually available**, not a prerequisite to all progress. Neither synthetic hooking nor CGM ACTIVE membership proves a downstream Garden authorization grant. Preserve genuine PlayPark authentication, do not forge VIP/session authorization, and distinguish inability to bypass an external entitlement check from the feasibility of implementing a local pre-login membership gate.
+
+A viable native interception integration has not yet been established for the Houdini-translated Unity app. The remaining engineering question is whether CGM can be safely modified in the local test copy with a genuine fail-closed pre-login gate, without intercepting or forwarding passwords to membership services, without changing upstream authorization decisions, and with a fully documented restore/rollback plan. Do not claim a working APK.
