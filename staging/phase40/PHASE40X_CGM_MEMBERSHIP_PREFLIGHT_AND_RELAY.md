@@ -49,3 +49,16 @@ Do not claim that the current APK already calls `authfirst.php` from the second 
 ## Fundamental separation
 
 **CGM ACTIVE** is eligibility in the user's CGM database; **ANLGarden VIP** is an entitlement controlled by a third-party relay; **PlayPark username/password validity and Game/Garden sessions** are decided by official infrastructure. A client-side check cannot itself confer the other entitlements. Staging tests should show these gates separately instead of conflating them.
+
+## Reuse established upstream, don't rebuild it (archival review, 2026-10-21)
+
+Inspected earlier user Library artifacts `CGM_Owned_Upstream_v1.zip`, `CGM-Owned-Upstream-V1-AuthFirst-Compat.zip`, and `CGM_Provider_Integration_v2.zip`. These packages **already exist** and cover membership checks, as distinct from the real game/session provider. Historical Phase2.6I Stage0 PHP router had:
+- `/verify.php?data=<protected account ID>` forwarded an encrypted *identifier only* to CGM-owned `https://jpcg.onrender.com/verify.php`. Prior runtime testing found 2 `INPP.`-prefixed CGM membership IDs ACTIVE and a plain-email version INACTIVE (be careful about identifier normalization and canonical identity). It did **not** prove native APK callback interoperability.
+- `/authenticate.php` returned 503 and `/session.php` a protected **failure** because this service wasn't a legitimate PlayPark login/session provider. This is by design and **must not be changed to a fabricated success**.
+- Historical local listener `D:\CGMTEST\CGM_Stage0_Test\public\index.php` on loopback `127.0.0.1:8091`. Earlier files are archival; do not overwrite or activate their routes.
+- The other `AuthFirst-Compat` Python archive holds a **separate SQLite membership database**, not automatically populated from the current Render/PostgreSQL `codes` table. Do not deploy it as a drop-in replacement or migrate users without an explicit backfill/approval.
+- Phase2.6J provider scaffold didn't integrate a real provider; it explicitly disabled authenticate/session success.
+
+**Therefore no more new independent upstream v1 or duplicate membership endpoint is needed**. Work remaining: a trusted pre-submit trigger/deferral in the **existing CGM APK** for the *already working* `authfirst.php` email-only check, with unchanged official/third-party stage-0 session relay after ACTIVE. Normal Unity `Login()` sets `isLoginProcess` shortly after `SendLogin()`; any asynchronous deferral needs to preserve that state and avoid duplicate/re-entrant submissions. Exact installed current CGM target APK is SHA-256 `44b89aa390734b2d05705a20620d6175e298ed790d88734d245e87d98ac00944` (different from an earlier Library signed APK `DEB51B...` despite matching ARM64 lib), so **no claim of patching installed APK** without this exact artifact.
+
+The user goal is to first *observe* CGM membership check before stage-0 and then original login progressing. This can be developed as a client preflight only; it does not authorize ignoring upstream `VIP` rejection or generating session packet bytes. The Game Server popup is a useful UI checkpoint but not proof of valid official/Garden session.
