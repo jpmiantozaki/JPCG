@@ -37,3 +37,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AK_HT
 This builds, hash-checks and signs the separate APK, checks Nox62032 readiness, installs/launches only to `127.0.0.1:62032`, no protected `62030/62031` targets. The HTTP request occurs only after the button press. Wait 10–15 seconds, send final screenshot or any encountered PowerShell error.
 
 A negative-path PASS would prove only restored native JNI + strict HTTP response parsing + server INACTIVE handling + fail-closed integration in an isolated Android app, **not** the real Unity login callback or CGM ACTIVE access to Garden.
+
+## Nox62032 runtime outcome — confirmed PASS (user screenshots, 2026-10-21)
+
+User ran `scripts/run_phase40ak_full.ps1` on Windows, with:
+- Automatic ARM64 APK build PASS, SHA256 `67210A07D897BD5086FA245640580AFF022F5132F31A78CFE2C387E712B07FBC`, package `com.cgm.authfirst.aktest`, signature verified.
+- ADB installation on disposable `127.0.0.1:62032`: `Success`. Activity launch `cmp=com.cgm.authfirst.aktest/.MainActivity`: succeeded.
+- Screenshot 1: `OFFLINE JNI: 27/27 PASS`, `OFFLINE PROTOCOL: 10 PASS`, `HTTPS CHECKING: synthetic email only, no password or session...`
+- Screenshot 2:
+  - `ORIGINAL PHASE40AH JNI: 27/27 PASS`
+  - `RECOVERED PHASE40AE PROTOCOL FIXTURES: 10/10 PASS`
+  - `HTTPS RESPONSE: INACTIVE (expected for new synthetic ID)`
+  - `NATIVE FAIL-CLOSED: PASS (denied/cancelled, no continuation)`
+  - `PHASE 40AK NEGATIVE-PATH RUNTIME PASS`
+  - `Original Unity CONFIRM and LIVE ACTIVE path NOT tested.`
+
+**Interpretation:** The isolated Android APK can invoke original native gate, make a real HTTPS request with a synthetic email to the CGM-owned `authfirst.php` and deny continuation on a server INACTIVE result. This does **not** validate real ACTIVE membership, trusted official identity, app integration, ANLGarden upstream VIP, or PlayPark/Game/Garden authorization. Future work should concentrate on a verified original-client Unity/Android load point and callback binding, preserving the original login and server decisions, not repeat synthetic negative-path tests.
