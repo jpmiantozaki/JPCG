@@ -28,3 +28,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AM_In
 ```
 
 Send summary output or `results\Phase40AM_Installed_Scene_Parity.json` to determine whether exact installed scene matches archived. Do not upload full game APK unless needed. Read-only comparison **cannot** establish the missing executable membership callback. No permitted Unity source or proven native callback insertion path established. Preserve original login and all ANLGarden/PlayPark/Garden server responses. Never modify protected Nox62030/62031.
+
+
+## User Nox62032 result — Phase40AM PASS (2026-10-22)
+
+User ran `scripts/run_phase40am_readonly.ps1`. ADB read-only pull of the installed `com.DeathToB.ANLGarden` base.apk succeeded. Reported installed APK SHA256:
+`44b89aa390734b2d05705a20620d6175e298ed790d88734d245e87d98ac00944`.
+
+```
+classification: EXACT_ARCHIVED_UNITY_SCENE_MATCH
+scene_matches_archived: True
+classes_dex_matches_archived: False
+metadata_matches_archived: True
+native_matches_archived: True
+gate_native_library_packaged: False
+gate_loader_literal_in_dex: False
+```
+
+Interpretation: the inner CONFIRM serialized binding and the underlying archived scene, native IL2CPP, metadata are byte-identical. Whole APK and Android `classes.dex` differ. **Do not infer the DEX change's nature until comparing class/method identifiers/code.** No CGM JNI loader or native library is proven inside this original installed client. No on-device mutation occurred in this audit.
+
+Next: offline Phase40AN DEX structural delta using the already-downloaded Nox62032 base.apk local snapshot.
