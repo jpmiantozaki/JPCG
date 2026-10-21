@@ -53,3 +53,20 @@ The next concrete phase is **not yet another synthetic APK**. It anchors the alr
 Source image: original `libil2cpp.so` SHA-256 `fb569843b5955b0bbbebc143d5421942160d4dfe6f70cb7853e85cace8b02fc8` shared across relevant CGM native builds. File bytes at RVA 0x6A5F20 are `f60f1df8f55301a9f37b02a9969900d0`, **real instructions, not the one-NOP fixture**. Any future trampoline needs instruction-specific relocation/ABI and concurrency proof; the fixture trampoline must not be transplanted.
 
 Prepared artifact: `Phase40M-ReadOnly-CGM-Anchor.zip` with `Run-Only-62032.ps1`. Its guarded script checks the exact original CGM APK hash `44b89aa390734b2d05705a20620d6175e298ed790d88734d245e87d98ac00944`, validates native SHA and prologue offline, then reads only `get-state`, `pidof`, and `/proc/<pid>/maps` for `62032`. It derives a candidate **guest image address** relative to that process's mapped ELF base and emits a local JSON report. No runtime test result is claimed until user returns output. This is an anchor/mapping checkpoint, **not observed execution and not an inline hook**. All production and rollback environments untouched.
+
+## Phase 40M — original CGM read-only anchor passed (user-run, 2026-10-21)
+
+User ran `Phase40M-ReadOnly-CGM-Anchor/Run-Only-62032.ps1` on disposable Nox `127.0.0.1:62032`. The first attempt stopped safely because CGM was not running; the second attempt passed after opening the original yellow login screen, without pressing Login or entering credentials.
+
+Observed console:
+- Exact Phase40J CGM APK SHA-256: PASS
+- Original ARM64 `libil2cpp.so` SHA-256: PASS
+- Non-authentication `LoginServerManager.ShowLoginButton(bool)` static native RVA `0x6A5F20`
+- Original 16-byte method prologue `f60f1df8f55301a9f37b02a9969900d0`
+- Live process PID `6473`; mapped guest ELF base `0x0516C000`, **candidate guest** address `0x05811F20`; candidate page flags `r--p`
+- Houdini module present: True
+- `PASS: ORIGINAL CGM NON-AUTH METHOD MAPPED READ-ONLY`
+- Local report: `D:\CGMTEST\Phase40M-ReadOnly-CGM-Anchor\results\phase40m-anchor.json`
+- No live code modification, login function invocation, APK install, original credential packet, or backend network request.
+
+No proof of native execution or host-executable address ownership is claimed. Next: offline disassembly of the exact original non-auth UI method at RVA `0x6A5F20`; characterize the first instructions and their PC-/stack-relative effects. Do **not** borrow the single-NOP fixture trampoline for original Unity code.
