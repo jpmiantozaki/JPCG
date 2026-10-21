@@ -143,3 +143,21 @@ Limit: This fixture tests branch proximity and continuation shape inside its own
 - **0/3 patch cycles**, **0** hook calls, **0** pass-through calls, restored bytes `no` (not applied), target still modified `no`; `errno: 0`, `PASS: NO`.
 - This is a **preflight mismatch**, not evidence that the actual branch or Houdini trampoline was attempted or failed; no CGM game code modified.
 - Investigation: test binary `libcgm40p_fixture.so` in `build` must be disassembled with `llvm-objdump -d --disassemble-symbols=fixture_target` to compare the four compiled ARM64 instruction words to source-side preflight constants: `F81D0FF6, A90153F5, A9027BF3`, and `ADRP X22` mask `(word&9F00001F)==90000016`. Then distinguish compile/linker behavior from runtime memory/image mismatch before changing or reinstalling anything.
+
+## Phase 40P linker-relaxation diagnosis and R1 fix (2026-10-21)
+
+User executed **offline** llvm-objdump against compiled Phase 40P fixture `libcgm40p_fixture.so`:
+```asm
+1d8c: f81d0ff6 str  x22,[sp,#-0x30]!
+1d90: a90153f5 stp  x21,x20,[sp,#0x10]
+1d94: a9027bf3 stp  x19,x30,[sp,#0x20]
+1d98: d503201f nop
+1d9c: 10fffed6 adr  x22,0x1d74 <fixture_original_body>
+1da0: d63f02c0 blr  x22
+```
+
+Source requests `ADRP X22, fixture_original_body; ADD X22, X22, :lo12:fixture_original_body` at +12/+16. LLD performed relaxation into `NOP; ADR` for the nearby fixture-local symbol. Thus preflight correctly failed on the fourth instruction. This is a compile/link layout issue, **not** a native patch/Houdini attempt. No CGM code changed.
+
+Reproduced the same C/assembly transformation in a local LLVM 17 AArch64 ELF shared-library toolchain, and verified `-Wl,--no-relax` retained the expected `ADRP X22; ADD` pair. **Not** yet built under the user's Windows NDK.
+
+Prepared dedicated R1 archive `Phase40P-R1-NoRelax-Fixture.zip`, a *separate* package `com.cgm.phase40pr1.fixture`, no Internet permission. It changes clang link flags to include `-Wl,--no-relax` and adds a **build-time disassembler assertion** for exact `STR; STP; STP; ADRP X22`. Build fails before APK signing if relaxed or altered. Its runner uses explicit serial `127.0.0.1:62032`, refuses an existing R1 package, and doesn't access/replace the previous Phase40P/CGM apps. R1 build and actual Nox test **not yet run**.
