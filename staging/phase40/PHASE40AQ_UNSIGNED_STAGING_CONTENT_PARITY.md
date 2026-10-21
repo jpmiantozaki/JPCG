@@ -43,3 +43,15 @@ Expected `OFFLINE_UNSIGNED_STAGING_CONTENT_PARITY_PASS` and JSON report at `...\
 **The generated `Phase40AQ_CGM_Preloader_UNSIGNED.apk` must NOT be installed:** it is unsigned, package ID matches original game, a different signing key would be incompatible with a same-package update, and no permitted runtime integration/Unity original-login continuation has been proven. No Nox62030, 62031, 62032 changes, no CGM/PlayPark/Garden server requests.
 
 Next GO/NO-GO requires a separate, user-approved reversible emulator deployment plan and a verified authorized onClick or Unity-side callback interception mechanism. Do not disable original CONFIRM persistent listener without an executable working replacement. CGM ACTIVE alone does not substitute for ANLGarden or official PlayPark session authorization.
+
+## User Windows result — Phase40AQ offline merge PASSED (2026-10-22)
+
+User ran `run_phase40aq_offline.ps1` and reported:
+- `=== PHASE40AQ OFFLINE MERGE CONTENT PARITY PASS ===`
+- 167 original non-signature ZIP payloads preserved identically
+- 3 obsolete signature entries removed
+- Unsigned output SHA256 `9d2a429456ae8353be4a70d2b8c037c08c4e2c65e2f10c7b4df182d9e617af1d`
+- JSON report saved in `staging-only/Phase40AQ_Unsigned_Staging_Report.json`
+- Not signed/installable, original game unmodified, no runtime bridge test
+
+Next: Phase40AR read-only-input signing/certificate comparison on a separate local staging copy only. Never install on occupied Nox62032 or protected 62030/62031; the original signing identity and backup/rollback data must remain safe.
