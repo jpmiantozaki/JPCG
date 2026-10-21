@@ -91,3 +91,11 @@ Original `dump.cs` callback RVAs and Ghidra addresses (`+0x00100000`):
 - This is **official LoginServer packet result handling**, separate from upstream third-party `VIP` error at `RelayServerData` HTTP callback and CGM membership `authfirst.php`.
 
 This checkpoint resolves the callback *addresses and native actions* without requiring the user to search `dump.cs` or take new screenshots. Remaining useful but narrower question is mapping string constants for result `3`/`6` to exact popup text; optional read-only metadata inspection can do this. No fabricated or bypassed server results.
+
+## Confirmed user experience — saved email after successful login (2026-10-21)
+
+User reports that the APK has a **Remember Email** checkbox. When checked, it saves the typed login email so that a later restart/reconnect autofills the email and prompts for the password again. This is **user-observed UI behavior**, not a decompiled proof of the precise checkbox conditional.
+
+The compiled `LoginServerManager.<OnPacketReceived>b__41_2` at RVA `0x6A8A80` invokes `PlayerPrefs.SetString`, and parent `OnPacketReceived` dispatches this callback in the successful result-0 branch. Together with user observation, this supports persistence of the email/login identifier on a successful login, but the exact `PlayerPrefs` key and check-box branch need verifying before claiming a byte-for-byte mapping. There is no evidence here that the password is saved.
+
+**Auth-First integration impact:** read the **currently displayed identifier** upon each user confirmation (typed or autofilled) and check fresh CGM membership against that value. A cached login ID is not proof of CGM ACTIVE or authenticated identity; preserve Remember Email UI and original password processing without assuming preauthorization from stored preferences. Don't substitute cached ID for edited UI content. No authentication bypass or upstream modification.
