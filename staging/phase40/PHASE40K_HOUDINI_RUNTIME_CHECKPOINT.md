@@ -134,3 +134,12 @@ Observations: real method has conditional branches, calls, a return, and a tail 
 Prepared new archive `Phase40P-EntryBranch-Fixture.zip` for Windows local build. It contains standalone zero-network ARM64 test APK source in package `com.cgm.phase40p.fixture`, using the successful Phase40L build/runner design but replacing its single NOP with matching first-three stack-save instructions and a fourth `ADRP x22` in a fixture-only method. Test modifies only the **first four-byte instruction**, then replays that original `STR x22,[sp,#-0x30]!` in a trampoline, returns to **target+4** where subsequent instructions (including `ADRP` at +12) execute at their original PC. The target's original function increments a private counter. Three cycles of 8 calls are checked. Builds only on user's Windows SDK; no live result yet. Independent cross-assembly sanity check showed first-three encodings `f81d0ff6 a90153f5 a9027bf3` and fourth `ADRP x22`. No modification of the CGM APK or its runtime intended by 40P.
 
 Limit: This fixture tests branch proximity and continuation shape inside its own ARM64 image only; real CGM code/hook ownership, runtime memory protections, thread safety, exact original-CGM calling context, membership checks, genuine upstream authorization, and garden access remain outstanding.
+
+## Phase 40P — compiled and run: guarded **non-pass** (user console, 2026-10-21 16:03:46)
+
+- Local independently signed no-network fixture APK SHA-256 `39CC50818BA5AF717C58D3CC19C2063B15BA695EA7806FCDE5AE0C5F05217360` installed on dedicated `127.0.0.1:62032`, package `com.cgm.phase40p.fixture`, fixture process PID `8638`.
+- Result `SYNTHETIC_UI_PROLOGUE_MISMATCH`; `Prologue 3 stack saves and ADRP x22: no`.
+- Fixture baseline/warm return values 7/7; original call count 1001.
+- **0/3 patch cycles**, **0** hook calls, **0** pass-through calls, restored bytes `no` (not applied), target still modified `no`; `errno: 0`, `PASS: NO`.
+- This is a **preflight mismatch**, not evidence that the actual branch or Houdini trampoline was attempted or failed; no CGM game code modified.
+- Investigation: test binary `libcgm40p_fixture.so` in `build` must be disassembled with `llvm-objdump -d --disassemble-symbols=fixture_target` to compare the four compiled ARM64 instruction words to source-side preflight constants: `F81D0FF6, A90153F5, A9027BF3`, and `ADRP X22` mask `(word&9F00001F)==90000016`. Then distinguish compile/linker behavior from runtime memory/image mismatch before changing or reinstalling anything.
