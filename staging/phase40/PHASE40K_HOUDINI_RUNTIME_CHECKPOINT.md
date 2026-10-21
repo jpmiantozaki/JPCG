@@ -174,3 +174,17 @@ The local user corrected PowerShell build-script parsing around `-Wl,--no-relax`
 - Demonstrates a **single overwritten stack-save instruction** replayed in a trampoline followed by continuation at target+4, with fixture's PC-relative `ADRP` remaining at original address. Does *not* prove guest patching of original `libil2cpp.so`, safe runtime attachment/injection, page manipulation in game app, concurrent entrypoint callers, or actual CGM membership gating.
 
 Next narrow original-app checkpoint: read and compare the four live target prologue words under a running 62032 CGM process from `/proc/<pid>/mem` **read only**, distinguish memory-read restrictions from mismatched executable image. No live patch until both runtime bytes and ownership/ABI/concurrency strategy can be justified.
+
+## Phase 40Q — original live guest-memory byte comparison PASSED (user-run, 2026-10-21)
+
+Read-only PowerShell command on disposable Nox `127.0.0.1:62032`, targeting live CGM PID `9311`:
+- Recovered mapped original `libil2cpp.so` guest base, added statically confirmed RVA `0x6A5F20` to derive guest address `0x05811F20`.
+- Read exactly 16 bytes via `/proc/9311/mem`: `f60f1df8f55301a9f37b02a9969900d0`.
+- Independently preserved original expected 16-byte method prologue: `f60f1df8f55301a9f37b02a9969900d0`.
+- Console: `PASS: ORIGINAL CGM LIVE PROLOGUE MATCHED`; `READ-ONLY. NO HOOK. NO LOGIN. NO CODE MODIFICATION.`
+
+This establishes the **identity of live guest-mapped bytes** at the expected non-auth UI method address. It does NOT establish executable host address ownership (Houdini keeps translated code separately), an authorized supported injection point, safe executable memory rewriting, cache coherence, no concurrent calls, or legitimate CGM/PlayPark eligibility and Garden sessions. Never re-use absolute guest address in another process without deriving process base.
+
+### Phase 40R direction
+
+Stop further repeat fingerprint/disassembly/synthetic checks; those gates now have evidence. The next responsible integration checkpoint is to settle a **supported, owner-approved deployment mechanism** for the original CGM APK, preserve official authentication and fail-closed eligibility behavior, and design a *non-auth, reversible test on a disposable backup* only when memory protection, cache, thread coordination, restore-on-crash, and ABI conditions can be demonstrated. No live patch against `Login()`/`SendLogin()` is justified by these fixture results alone.
