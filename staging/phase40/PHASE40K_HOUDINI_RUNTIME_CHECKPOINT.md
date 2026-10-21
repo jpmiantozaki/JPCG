@@ -199,3 +199,12 @@ Read-only scan on disposable Nox `127.0.0.1:62032` while original CGM is running
 - **Decision:** A live guest-byte match (40Q) plus synthetic trampolines (40P-R1) does not imply that attaching to Houdini or patching game code is safe: translated host code and guest ELF guest-address mappings differ, 47 threads demand synchronization, and unknown translated-cache behavior requires explicit proof. Do not use direct patching of `ShowLoginButton`, `Login` or `SendLogin` as the next automatic step.
 
 Next feasibility question: can a temporary debugger **attach to this non-debuggable, rooted, test-only CGM process** and report process/module/thread metadata without installing any Interceptor and without modifying the original APK? This is a host-ABI observation only and must not be represented as guest method invocation tracing. Any actual guest-method call observation will require a further independently validated mechanism or supported source/SDK integration.
+
+## Phase 40S — remote Frida server process enumeration succeeded (user-run, 2026-10-21)
+
+- Windows Python `3.15.0`; `frida` Python module `17.23.3` installed; `frida-tools` CLI absent. The diagnostic command `frida --version` failed, but direct `python -c 'import frida'` verified the module.
+- Matching `frida-server-17.23.3-android-x86_64` (correct for x86_64 Nox host) was extracted, verified as x86_64 ELF, and copied to **only** `127.0.0.1:62032` at `/data/local/tmp/cgm40s-frida-server`.
+- Server started bound to guest `127.0.0.1:27042`. Explicit `adb -s 127.0.0.1:62032 forward --no-rebind tcp:27045 tcp:27042` succeeded.
+- Windows Python `frida.get_device_manager().add_remote_device('127.0.0.1:27045')` connected; process enumeration returned `[(3363, 'ANL Garden')]` matching ADB CGM PID `3363`. Console `PASS: FRIDA CAN SEE THE ORIGINAL CGM PROCESS`.
+- **No Frida session attach**, agent injection, hook, game call, credential entry, packet modification or APK modification yet.
+- Next controlled gate: test Frida `device.attach(pid)` then `session.detach()` with no scripts; attachment itself can alter timing, suspend threads temporarily, or crash this translated non-debuggable app. Require fresh PID match and controlled one-time execution; don't claim guest IL2CPP call interception from mere attach.
