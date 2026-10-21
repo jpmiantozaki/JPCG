@@ -59,3 +59,20 @@ The user states explicitly:
 **Decision correction:** do not imply that a first-party ANLGarden SDK or an official ANLGarden release ought to be obtainable or is necessary for research. Continue *binary-only compatibility and integration feasibility* on the CGM APK only, in disposable testing and without modifying original servers. Source- or extension-based integration is an alternative **if actually available**, not a prerequisite to all progress. Neither synthetic hooking nor CGM ACTIVE membership proves a downstream Garden authorization grant. Preserve genuine PlayPark authentication, do not forge VIP/session authorization, and distinguish inability to bypass an external entitlement check from the feasibility of implementing a local pre-login membership gate.
 
 A viable native interception integration has not yet been established for the Houdini-translated Unity app. The remaining engineering question is whether CGM can be safely modified in the local test copy with a genuine fail-closed pre-login gate, without intercepting or forwarding passwords to membership services, without changing upstream authorization decisions, and with a fully documented restore/rollback plan. Do not claim a working APK.
+
+## Confirm-vs-VIP precedence — user-controlled A/B observation (2026-10-21)
+
+**User-observed exact comparison:** Using the *same real account email and the same intentionally wrong password* through the original second credential CONFIRM action:
+1. Before that email/account had redeemed VIP, the CGM APK went to the Redeem UI instead of showing an incorrect-credentials error.
+2. After VIP redemption on that email/account, submitting the same email and intentionally wrong password produced the official incorrect-credentials error.
+
+This is strong empirical evidence that the outcome presented to the user is gated/prioritized by VIP status, and that the VIP rejection/redemption transition does **not require displaying a successful password validation**. Account ID is likely used to determine VIP eligibility. This does **not** alone prove server request order, that the exact raw email is the lookup key (identifier may be normalized/prefixed), or whether official authentication was attempted before an error was masked. Do not ask the user to repeat live wrong-password tests just to reproduce this already observed behavior.
+
+**Critical next static tracing priority (distinct VIP paths):**
+- Inner button `Login()` RVA `0x6A86E8` calls `SendLogin(...)` RVA `0x6A80C0`, storing account identifier into shared context `+0xB0`.
+- Relay path `RelayWebManager.RelayServerData()` Ghidra `0x007B04CC` with HTTP callback Ghidra `0x007B088C`. Prior decompile: on relay error and response message `VIP`, invokes `VIPManager.ReceiveNoVIPData`; successful relay response forwards packet bytes to original Login/Game sessions. Analyze whether this is the exact stage that short-circuits wrong-password feedback.
+- Separate async `RelayWebManager.RelayVerifyVIP()` Ghidra `0x007B0628` and callback `0x007B0D50`; this also can disconnect/restore/show Redeem UI on verification failure. Do NOT conflate it with relay session VIP rejection.
+- Client login packet handler `LoginServerManager.OnPacketReceived` Ghidra `0x007A738C` is relevant to password-error display when VIP succeeds.
+- Need prove path from CONFIRM through relay result handling and distinguish errors without logging plaintext passwords, packet bodies, cookies, session keys, or account identifiers.
+
+**Decision:** Next inspect the previously identified original **relay HTTP response callback** `0x007B088C` in Ghidra, with references to `ReceiveNoVIPData`, and compare against separate `0x007B0D50` VIP-verification callback. Use offline decompilation as primary evidence, not unneeded live login experimentation. Preserve upstream entitlements; do not rewrite relay `VIP` rejection into success.
