@@ -33,3 +33,14 @@ py '.\scripts\verify_layout.py'
 Only after ELF64 AArch64 static verification, build the **separate non-networked test APK** (NOT original CGM), inspect its APK ID/ABI, and consider test install on disposable `127.0.0.1:62032` only. If ARM64 load works, that proves device ARM64/JNI capability, **not** an executable CGM membership gate or verified Unity callback. The actual Phase40AH JNI source must still be recovered/rebuilt and independently tested.
 
 Preserve Phase40AF inner CONFIRM Unity PathID4300 -> `Login()` target PathID4610. No direct or fake VIP/official game server authorization, no session fabrication, no edits to CGM APK or rollback Nox62030/62031.
+
+## User-side NDK build and static validation result (2026-10-21)
+
+PowerShell on Windows in `D:\CGMTEST\CGM_Phase40AI_ARM64_Linker_Probe` ran `scripts/build_arm64_probe.ps1`, with reported output:
+
+- Compiled `app/src/main/jniLibs/arm64-v8a/libcgm_abi_probe.so` targeting Android API 28.
+- SHA256: `496cc4072236f070737ccf57fc73497d39e599e678eb009c40c4ec7509d6e36a`.
+- `py scripts/verify_layout.py` reported `STATIC PASS` and `ELF PASS`, hash equal to build output.
+- **Not** yet built as APK, installed on Nox62032, or exercised through ART/JNI. Test C library is a harmless dummy probe, not Phase40AH membership gate.
+
+**Next gate:** Build standalone debug APK (app ID `com.cgm.authfirst.abi_probe`), inspect APK contents and declared ABI `arm64-v8a` before a carefully targeted install on disposable `127.0.0.1:62032`. Do not use 62030 or 62031. Do not modify the original CGM/Unity CONFIRM button.
