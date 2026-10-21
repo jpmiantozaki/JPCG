@@ -36,3 +36,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AN_An
 Expected output classification and method/class counts; report `D:\CGMTEST\CGM_Phase40AN_Android_DEX_Delta\results\Phase40AN_Installed_DEX_Delta.json`. Read-only uses existing local `...Phase40AM...\collected\Nox62032_CGM_base_readonly.apk`, does not pull another copy.
 
 **Decision boundary:** The purpose is to determine whether DEX changes implicate the Unity Android loader or are unrelated. Even if no DEX methods changed, the original CGM APK still has no verified executable CGM gate callback. Never disable the original Unity CONFIRM listener 4300->Login() 4610 without an authorized, fully functioning replacement; preserve upstream server decisions. Protect Nox62030 and 62031.
+
+## User Windows result — Phase40AN comparison COMPLETE (2026-10-22)
+
+User ran `scripts/run_phase40an_readonly.ps1` on local Phase40AM collected APK. Reported:
+```text
+installed_base_apk_sha256: 44B89AA390734B2D05705A20620D6175E298ED790D88734D245E87D98AC00944
+archived_dex_sha256: 1719e3f09ae56a531116634967fd7106de384e3d282fa212174ed5cf46844140
+installed_dex_sha256: af5058ac45a5630d662fdf2413d501c771b9972043011473a36c5549fe68b312
+classification: DEX_METHOD_CODE_DIFFERENCES
+classes_added: 0
+classes_removed: 0
+implemented_methods_added: 0
+implemented_methods_removed: 0
+methods_with_different_instruction_hash: 1
+Landroidx/core/graphics/PaintCompat;->hasGlyph(Landroid/graphics/Paint;Ljava/lang/String;)Z
+potentially_relevant_changed_methods: 0
+Loader literal changed: [none reported]
+```
+**Outcome:** In the comparator's class/method/instruction coverage, only the AndroidX graphics glyph-checking method's instructions differed. No added/removed classes or implemented methods, no detected loader-related method differences or changed gate-loader literal. This removes the specific concern that the installed DEX diverges substantially in its Java loader entrypoints. This does not prove overall bytecode/metadata equivalence or that a new CGM native gate is executable from the original Unity CONFIRM event. Phase40AF CONFIRM Path4300->Login() Path4610 remains intact.
+
+**Next:** Stop repeating offline DEX similarity tests. Prioritize a verified executable Unity-owner-thread callback and original Login() continuation pathway; source-level integration if matching original Unity project is available, otherwise an explicitly validated nonproduction extension route is still required. Never turn off CONFIRM before replacement works.
