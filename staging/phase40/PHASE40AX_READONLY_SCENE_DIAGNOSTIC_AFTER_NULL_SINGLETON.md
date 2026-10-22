@@ -59,3 +59,25 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AY_Re
 Script requires exact local Phase40AW signed APK SHA256, connected Nox62033 (Android API28 and arm64), consistent package absent/present evidence from unfiltered `pm list packages` and `pm path`. If absent, installs approved signed AW test APK once on **only** Nox62033; if present, skips installation. Always read-only pulls installed base.apk and requires exact SHA256 before launch; then freshly launches Unity original Activity without LOGIN, waits 30s, collects focused Unity/Phase40AW log, activity state, PNG screenshot and JSON into timestamped results folder. No additional Java/native build, no original Login/CONFIRM modification, no real credentials, no network requests by the script itself. **Normal app startup can independently contact original servers**; network isolate if strict offline test required. No protected Nox62030/31/32 touched.
 
 The screenshot and activity state are **context clues only**, not proof that `LoginServerManager.Awake()` executed or that original runtime AUTH-FIRST injection is complete. If report/screenshot contains user account details, redact them before sharing. Do not proceed to active login tests or server-session manipulation.
+
+## Phase40AY Windows recovery CONFIRMED PASS (2026-10-22)
+
+User ran `scripts/run_phase40ay_recover_aw.ps1` on *disposable Nox62033*. It verified local signed Phase40AW SHA256 `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e`, determined package genuinely absent (consistent with user's accidental uninstall), installed it successfully (ADB exit 0), **pulled and verified exact installed APK SHA256**, launched original Unity Activity without LOGIN and collected logs, screenshot and activity report.
+
+User final log observations:
+```
+10-22 21:21:12.198 I/CGMPhase40AW(3092): PHASE40AW_SINGLETON_REFERENCE_NULL
+10-22 21:21:12.199 I/CGMPhase40AW(3092): PHASE40AW_PROBE_12SEC STATUS=105
+10-22 21:21:24.198 I/CGMPhase40AW(3092): PHASE40AW_SINGLETON_REFERENCE_NULL
+10-22 21:21:24.199 I/CGMPhase40AW(3092): PHASE40AW_PROBE_24SEC STATUS=105
+=== PHASE40AY RESTORE/VERIFY AND READ-ONLY SCENE SNAPSHOT COMPLETE ===
+```
+
+Files **on user's Windows PC; not yet uploaded**, so screen contents and activity state are **unknown**:
+```
+D:\CGMTEST\CGM_Phase40AY_Recover_AW_After_Uninstall\results\Phase40AY_20261022_212037\Phase40AY_Current_Screen.png
+D:\CGMTEST\CGM_Phase40AY_Recover_AW_After_Uninstall\results\Phase40AY_20261022_212037\Phase40AY_Restore_And_Scene_Report.json
+D:\CGMTEST\CGM_Phase40AY_Recover_AW_After_Uninstall\results\Phase40AY_20261022_212037\Phase40AY_Startup_Log.txt
+```
+
+**Interpretation:** Repeat NULL snapshot after exact test-APK clean install supports null during observed untouched startup, but does **not establish** why, whether Unity login scene was active, Awake ran, or whether an authorized original-login callback exists. Need user screenshot + JSON/log before deciding on new instrumentation. Do not change listener, use credentials, or repeat APK rebuild by default. No test action targeted protected Nox62030/62031/62032.
