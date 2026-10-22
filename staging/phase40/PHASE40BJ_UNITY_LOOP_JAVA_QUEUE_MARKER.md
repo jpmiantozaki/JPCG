@@ -50,3 +50,21 @@ User ran `scripts/run_phase40bj_full.ps1` on disposable Nox62033. Their console 
 **Important source review:** `run_phase40bj_full.ps1` waits just 12s after READY before taking a one-time `logcat -d` snapshot. The Java preloader initially schedules a test after 15s and retries every 20s, up to 15 attempts. An initial/class-loading issue, a queue reflection failure, a callback not being drained, a logger-filter failure or insufficient observation time are all possible; cannot distinguish without logs. `JavaPluginPreloader.java` initializes static `Handler UI=new Handler(Looper.getMainLooper())` *before* the guarded static block, which is a candidate for class initialization error if main Looper unavailable, but no runtime evidence supports that specific cause yet.
 
 **Next diagnostic is log-only, NOT a repeat install**: keep exact 40BJ test APK on Nox62033, read existing results report/tagged log and current `adb -s 127.0.0.1:62033 logcat -d` filtered to `CGMPhase40BJ`, `JavaPluginPreloader`, `ExceptionInInitializerError`, `ClassNotFoundException`, `NoClassDefFoundError`, `UnsatisfiedLinkError`, `AndroidRuntime`. Have user paste filtered output after reviewing sensitive details. No touching protected instances 62030/31/32, no login/CONFIRM/credentials, no tests with remote upstream. Do not claim native owner-thread callback PASS.
+
+## User attempt to rerun Phase40BJ blocked safely; correction and Phase40BK no-install recheck (2026-10-23)
+
+User thought pressing outer yellow LOGIN was necessary after typing READY, but **Phase40BJ explicitly prohibits and does NOT require that button**. The Java Runnable queue marker is designed to execute via UnityPlayer's original game-loop queue on startup, independent of game login/official config.
+
+User attempted rerun of old one-shot `run_phase40bj_full.ps1` and it immediately STOPPED: `Runtime results folder already exists. Preserve prior results; do not automatically rerun.` This is intentional: previously built, signed Phase40BJ APK SHA256 `653FEDD22DAD578DCC42382AB34AB0201D585EA19B8A69E7D9DA97F2EA698BE5` was already installed, and re-executing build/install script is unsafe/unnecessary. **No new APK installation occurred on that blocked attempt.**
+
+New conversation artifact `CGM_Phase40BK_BJ_ResumeOnly.zip` SHA256 `613138b80ebf0fe9646568beab2fd4919035cf0553749d2eb178ad3ff3d2eeca`, PS5.1 resume-only script with safe ADB stdout/stderr capture. Static target safety and ZIP CRC PASS, no actual Nox test run here. It:
+- Targets ONLY disposable Nox62033 and validates API28, ARM64, exact original CGM package and *installed* signed Phase40BJ SHA by read-only ADB pull.
+- Preserves earlier markers to `resume-results/Phase40BK_*\Phase40BK_Previous_Markers.txt`, never overwrites Phase40BJ build/runtime reports, uses unique timestamp+GUID output directory.
+- Manual START to relaunch existing app (no apk install or code changes), manual READY once initial yellow LOGIN screen fully loaded (no UI button click), then **45s log collection window** to catch delayed 15s/20s retries.
+- Reports `PHASE40BJ_NATIVE_GATE_LIBRARY_LOADED`, `PHASE40BJ_QUEUE_POSTED`, `PHASE40BJ_UNITY_LOOP_THREAD_MATCH_PASS` or setup/thread/queue missing errors, without any original Login()/CONFIRM, real credential input or PlayPark membership/Garden action.
+
+One command after extracting to `D:\CGMTEST\CGM_Phase40BK_BJ_ResumeOnly`:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40BK_BJ_ResumeOnly\scripts\run_phase40bk_resume_only.ps1'
+```
+Signed APK contents untouched; protected 62030/31/32 untouched. The app's normal independent startup network activity is possible. Even if Java Unity loop marker PASS, managed IL2CPP C# callback/owner-thread safety, pre-submit CGM gate and original game/Garden session authorization remain unproven.
