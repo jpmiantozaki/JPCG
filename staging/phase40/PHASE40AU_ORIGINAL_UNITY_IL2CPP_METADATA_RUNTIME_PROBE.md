@@ -13,7 +13,7 @@ Native ELF successfully loads within the staged original compiled CGM Unity proc
 
 ## New Phase40AU artifact
 
-Conversation ZIP `CGM_Phase40AU_Original_Unity_Method_Probe.zip` SHA256 `b2cdf33a08048e64fe48bd10f309b125036f0dd333e5dbe6ee174da872ed7ce9`, 13 files, CRC verified.
+Conversation ZIP `CGM_Phase40AU_Original_Unity_Method_Probe.zip` SHA256 `ae7cdff080dc797ef494d950cb323cda5acd9b7ab89e9f4ae855fa7df3604c03`, 13 files, CRC verified.
 
 - Preserves original Phase40AH policy and JNI C source bytes from 40AK. Adds `native/phase40au_readonly_il2cpp.c` and `com/unity3d/JavaPluginPreloader.java` with two scheduled 12/24-second JNI probes after Unity startup.
 - Native C uses `dlopen("libil2cpp.so", RTLD_NOW | RTLD_NOLOAD)`, `dlsym` native metadata APIs, `il2cpp_domain_get`, thread attach only if not attached, `il2cpp_domain_assembly_open("Assembly-CSharp")` with `.dll` fallback, `il2cpp_class_from_name("", "LoginServerManager")`, `il2cpp_class_get_method_from_name("Login", 0)`, then detaches if newly attached. **Never calls il2cpp_runtime_invoke or Login/SendLogin; never touches UI state or credentials**.
