@@ -75,3 +75,18 @@ One-command Windows test, after extracting ZIP into `D:\CGMTEST`:
 powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AT_Resume_Installed_Preloader\scripts\run_phase40at_resume_only.ps1'
 ```
 Output `results\Phase40AT_Runtime_Result.json` and `results\Phase40AT_Preloader_Log.txt`. Static program safety tests PASS, ZIP CRC PASS, **Windows run not yet performed**. Even `LOADER_ONLY_RUNTIME_PASS` only proves Java preloader and native ELF loaded during original compiled CGM startup; CONFIRM callback and membership ACTIVE/PlayPark/Garden authorization remain untested.
+
+## Confirmed Phase40AT runtime success — 2026-10-22
+
+User executed `run_phase40at_resume_only.ps1` on disposable Nox62033, without installation or login during Phase40AT. Verified exact SHA256 of installed test-signed CGM APK `446befe5692a552d17e8d1a6bf799e838112be62e50abac101de8b08eab18ee1`. Original launcher `com.DeathToB.ANLGarden/com.unity3d.player.UnityPlayerActivity` started successfully. Result: **`LOADER_ONLY_RUNTIME_PASS`**.
+
+User logcat observations:
+```
+10-22 19:23:51.321 I/CGMPhase40AP( 4135): PHASE40AP_NATIVE_LIBRARY_LOADED (loader only; no Unity binding)
+10-22 19:29:15.837 I/CGMPhase40AP( 4380): PHASE40AP_NATIVE_LIBRARY_LOADED (loader only; no Unity binding)
+=== PHASE 40AT REAL CGM PROCESS PRELOADER LOADED ===
+```
+
+**New evidence:** The inserted JavaPluginPreloader class executed from Unity startup in the *test-signed original CGM application's process* and `System.loadLibrary("cgm_authfirst_gate")` returned successfully, on two observed process instances. This proves native library loading in the original compiled Unity app environment, **not** that native methods were invoked, that libil2cpp managed metadata can be queried, that the current CONFIRM listener is gated, that CGM ACTIVE works, or that legitimate ANLGarden/PlayPark/Garden permission was granted.
+
+Original installed game and rollback Nox62030/31/32 remain untouched by the Phase40AT script. Disposable Nox62033 retains the signed Phase40AR test APK. Next: read-only in-process IL2CPP runtime API reachability/managed class discovery probe (Phase40AU candidate), using no button interactions, no credentials, and no backend membership or upstream session changes. A further signed build must reuse the *same Phase40AR test certificate* and compare currently installed APK hashes before attempting any update on disposable 62033; do not install on other Nox instances.
