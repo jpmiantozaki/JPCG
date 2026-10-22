@@ -39,3 +39,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AS_Di
 Reports written to `...\results\Phase40AS_Runtime_Result.json` and `...\results\Phase40AS_Preloader_Log.txt`.
 
 **Evidence interpretation:** Even a log marker PASS proves only Java class initialization and successful JNI library load in the original compiled Unity app startup process. It does **not** establish a verified owner-thread gate, suppression of existing persistent `Login()`, CGM ACTIVE path, or legitimate official PlayPark and ANLGarden Garden/session acceptance. Never modify or disable original CONFIRM listener without a validated continuation and rollback path.
+
+## Phase40AS first user run — BEFORE INSTALLATION: empty-app guard false-positive
+
+User created/connected a fresh target `127.0.0.1:62033` and independently verified `adb shell pm path com.DeathToB.ANLGarden` produces no matching `package:` path. The original Phase40AS v1 script verified APK hash `446BEFE5692A552D17E8D1A6BF799E838112BE62E50ABAC101DE8B08EAB18EE1` and test-signing certificate `6fef57b71ce2f70af9cca1df6578620462ec55065a9151f78d0194386ebf25ed` but STOPPED at `Could not inspect app existence on Nox62033.` prior to APK install. Root cause: `adb shell pm path <not-installed-package>` can report exit status 1 despite successful negative existence inquiry; v1 incorrectly required exit 0.
+
+### Corrected Phase40AS runner (v2)
+
+New conversation ZIP `CGM_Phase40AS_Disposable_Runtime_Preloader_Fix.zip`, SHA256 `fa585418e70489a9f7af41275ff4da9091820077cd578a7de2e4ad28f7e5e533`. Replacement root directory `D:\CGMTEST\CGM_Phase40AS_Disposable_Runtime_Preloader_Fix`. Retains all existing target safeguards, APK hash/certificate checks, install once, logcat and fail-safe reports. Replaces missing-package check with `adb shell pm list packages com.DeathToB.ANLGarden`: successful exit0 with empty output is legitimate uninstalled state, exact anchored `package:com.DeathToB.ANLGarden` still blocks installation; nonzero package-manager errors stop. Python static safety regression and empty-package case tests PASS; ZIP CRC integrity PASS. **Corrected Windows runtime has NOT YET been run; no install or game modification has occurred.**
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AS_Disposable_Runtime_Preloader_Fix\scripts\run_phase40as_disposable_only.ps1'
+```
+
+Use the SAME new fresh Nox62033 instance only if it still has no original game app; protected Nox62030/31/32 off limits. No login, credentials, or official game/VIP/Garden sessions. Startup may contact original game's own backend unless test emulator networking externally disabled. Expect `PHASE40AP_NATIVE_LIBRARY_LOADED` log only if preloader/native library really loads inside the staged Unity app. This is not a working membership gate.
