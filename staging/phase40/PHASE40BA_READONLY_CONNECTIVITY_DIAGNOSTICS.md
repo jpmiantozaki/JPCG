@@ -44,3 +44,26 @@ User ran `run_phase40ba_readonly.ps1` on Nox62033 and pasted JSON + filtered log
 **Critical prior-project evidence rediscovered in user-owned Phase26N backup:** Phase2.6K actually tested same originally archived CGM build's first-stage yellow LOGIN with `GET http://127.0.0.1:8091/authenticate.php?version=1026`, using *emulator-specific ADB reverse tcp:8091 tcp:8091* to a local CGM-owned PHP upstream. The intentionally synthetic stage0 returned HTTP503; subsequent Phase2.6L used reverse tcp:8091 -> Windows tcp:8094 and synthetic MGServerResponse, not a legitimate PlayPark session. This *does not* prove current Nox62033 port mapping exists. Original IL2CPP metadata URL literal #7157 is `http://127.0.0.1:8091/authenticate.php?version=`; #7156 analytics, #7158 redeem, #7159 session, #7160 verify also use localhost 8091. Same original libil2cpp and metadata persist in Nox62033 staged APK (Phase40AW content parity).
 
 **Most useful next test: Phase40BB passive emulator/host port state preflight**. Read only `nox_adb.exe -s 127.0.0.1:62033 reverse --list` and Windows host `Get-NetTCPConnection -State Listen -LocalPort 8091/8094/18992`, without starting PHP, adding reverse mapping, or tapping original LOGIN. If missing ADB reverse mapping or Windows listener, the local prerequisite is absent and explains *a likely* cause of Web Error; do not imply other public PlayPark servers are down. Do not use synthetic endpoints for real credentials; if needed later, a local operator-owned, fail-closed test can be independently approved, without forging upstream auth/session data. No protected Nox62030/31/32 operations.
+
+## User Phase40BB local-port read-only inspection — confirmed missing (2026-10-22)
+
+On Windows with Nox62033 the user ran read-only ADB and host listener checks and reported:
+```
+=== ADB REVERSE MAPPINGS ON NOX62033 ===
+NO REVERSE MAPPINGS FOUND
+=== WINDOWS LOCAL LISTENERS ===
+PORT 8091 : NO WINDOWS LISTENER FOUND
+PORT 8094 : NO WINDOWS LISTENER FOUND
+```
+Together with the Phase26K/26L historical first-stage request path `http://127.0.0.1:8091/authenticate.php?version=1026`, this strongly suggests why initial yellow LOGIN showed `Web Error. Cannot connect to destination host` on the brand-new disposable emulator. **Not evidence of PlayPark outage.** This does not prove app's current exact request without a live route observation, and it does not prove singleton lifecycle. No port mapping/listener was created in this phase.
+
+### Next Phase40BC: local-only fail-closed route proof
+
+Prepared conversation ZIP `CGM_Phase40BC_Loopback_503_Proof.zip`, SHA256 `ebe143df3f2a4fcab84bdc424b2ecce38e59c8eb16f6f5b1f935da0b185242da`. Offline Python HTTP server regression (HTTP503 all paths, route-only sanitized log) and PowerShell safeguards static checks PASS; Windows/Nox runtime **NOT YET RUN**.
+
+One command, after extraction under `D:\CGMTEST\CGM_Phase40BC_Loopback_503_Proof`:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40BC_Loopback_503_Proof\scripts\run_phase40bc_local_503.ps1'
+```
+
+The command targets **only** Nox62033, read-only pulls and verifies installed Phase40AW signed test APK exact SHA256 `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e`, rejects occupied Windows listener/reverse port, creates local Windows 127.0.0.1:8091 HTTP server responding **503 exclusively**. Temporarily maps `adb reverse tcp:8091 tcp:8091`, prompts user `START` and **one manual click** on original outer yellow LOGIN, records only route class, not request query or credentials, restores by removing mapping and stopping owned server in finally. No game APK changes or network calls by diagnostic program to PlayPark/CGM production, no synthetic auth/session success, no user data input. Game itself may perform independent startup traffic; external isolation if needed. Intentional 503 means login **must remain unavailable**. The value is verifying a real `/authenticate.php` hit through current disposable mapping without fabricating configs or sessions. If no route hit, original client error remains unresolved.
