@@ -32,3 +32,15 @@ ZIP CRC PASS; hard-coded target only Nox62033; no ADB install/push/uninstall/oth
 ## Long-term safety
 
 Preserve original PlayPark login authentication and independent ANLGarden VIP/Game/Garden session decisions. Do not disable original inner CONFIRM listener, fabricate session, bypass connection failure, or treat missing singleton as verified destroyed component.
+
+## Phase40BA user Windows result — diagnostics captured, no host-specific failure logged (2026-10-22)
+
+User ran `run_phase40ba_readonly.ps1` on Nox62033 and pasted JSON + filtered log text:
+- `status=READONLY_DIAGNOSTICS_CAPTURED`, API28, expected `com.DeathToB.ANLGarden` installed, focus `UnityPlayerActivity`.
+- Android `WIFI CONNECTED/CONNECTED` default net100 `VALIDATED`, `lastValidated=true`; DNS addresses include `192.168.1.1`, `192.168.68.1`, `114.114.114.114`, `8.8.8.8`. `http_proxy=null`. `private_dns_mode=null`. `network_dns_primary` empty but DNS addresses in LinkProperties are not empty.
+- Filtered app logs contain **only** prior native `PHASE40AW_PROBE_12SEC/24SEC STATUS=105` from user sessions; no UnityWebRequest exception/HTTP status/URL appeared. Therefore cannot blame DNS/TLS/public server outage from this evidence.
+- NO new external requests were made by 40BA.
+
+**Critical prior-project evidence rediscovered in user-owned Phase26N backup:** Phase2.6K actually tested same originally archived CGM build's first-stage yellow LOGIN with `GET http://127.0.0.1:8091/authenticate.php?version=1026`, using *emulator-specific ADB reverse tcp:8091 tcp:8091* to a local CGM-owned PHP upstream. The intentionally synthetic stage0 returned HTTP503; subsequent Phase2.6L used reverse tcp:8091 -> Windows tcp:8094 and synthetic MGServerResponse, not a legitimate PlayPark session. This *does not* prove current Nox62033 port mapping exists. Original IL2CPP metadata URL literal #7157 is `http://127.0.0.1:8091/authenticate.php?version=`; #7156 analytics, #7158 redeem, #7159 session, #7160 verify also use localhost 8091. Same original libil2cpp and metadata persist in Nox62033 staged APK (Phase40AW content parity).
+
+**Most useful next test: Phase40BB passive emulator/host port state preflight**. Read only `nox_adb.exe -s 127.0.0.1:62033 reverse --list` and Windows host `Get-NetTCPConnection -State Listen -LocalPort 8091/8094/18992`, without starting PHP, adding reverse mapping, or tapping original LOGIN. If missing ADB reverse mapping or Windows listener, the local prerequisite is absent and explains *a likely* cause of Web Error; do not imply other public PlayPark servers are down. Do not use synthetic endpoints for real credentials; if needed later, a local operator-owned, fail-closed test can be independently approved, without forging upstream auth/session data. No protected Nox62030/31/32 operations.
