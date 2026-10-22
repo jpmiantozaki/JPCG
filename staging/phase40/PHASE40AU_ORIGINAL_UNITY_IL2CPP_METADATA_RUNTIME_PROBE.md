@@ -69,3 +69,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AV_Gu
 This read-only pulls Nox62033 installed `com.DeathToB.ANLGarden` base.apk first and accepts **only** Phase40AU exact SHA (skip install) or Phase40AR exact SHA (perform one guarded update using Phase40AU previously built APK); any other SHA or absent app stops. Installed Phase40AU exact SHA required before launch. Uses process-exit-check + both ADB output streams. Clears disposable logcat, uses `am start -S` to fresh-launch Unity without clicking/login, waits for the 12/24 second probes, captures `CGMPhase40AU`/AndroidRuntime logs, emits JSON. Never connects to protected Nox62030/31/32 or accesses credentials, membership endpoint, official PlayPark/Garden login/session flows. Original app normal startup might independently contact servers; externally isolate disposable emulator when offline assurance is needed.
 
 Even a Phase40AU method-discovery PASS proves only `LoginServerManager.Login()` managed metadata resolution, **not invocation, owner-thread instance lookup, persistent CONFIRM suppression, fresh membership ACTIVE, or PlayPark/ANLGarden VIP/Garden acceptance**.
+
+## User-confirmed Phase40AV runtime PASS — 2026-10-22
+
+User ran `run_phase40av_complete.ps1` on Nox62033. Before-install hash verified `CC80B36DDA5ADB9ECA64633F1C70C16A6C7C15B4F5506A49F37411D5FE76F39A`: Phase40AU **already installed**, so installer skipped. Fresh-launched `com.DeathToB.ANLGarden/com.unity3d.player.UnityPlayerActivity`, with no login or credentials.
+
+User supplied device logs:
+```text
+10-22 19:53:29.724 I/CGMPhase40AU(5223): PHASE40AU_NATIVE_LIBRARY_LOADED
+10-22 19:53:41.736 I/CGMPhase40AU(5223): PHASE40AU_LOGIN_METHOD_DISCOVERED (pointer not logged, never invoked)
+10-22 19:53:41.736 I/CGMPhase40AU(5223): PHASE40AU_PROBE_12SEC STATUS=100
+10-22 19:53:53.729 I/CGMPhase40AU(5223): PHASE40AU_LOGIN_METHOD_DISCOVERED (pointer not logged, never invoked)
+10-22 19:53:53.729 I/CGMPhase40AU(5223): PHASE40AU_PROBE_24SEC STATUS=100
+[40AV] RESULT: READONLY_MANAGED_METHOD_DISCOVERY_PASS
+```
+
+**Proven:** the added JNI module can resolve original `Assembly-CSharp/LoginServerManager/Login()` metadata through exported IL2CPP APIs during *real* modified CGM Unity process execution. Method was **never invoked**; no Unity owner-thread hook, login instance, membership ACTIVE, upstream authorization or Garden entry proved. This is an actual on-device read-only metadata result, not a host-only fixture.
+
+Next: Phase40AW verifies *only* whether the original LoginServerManager static `<Instance>k__BackingField` holds a non-null managed reference, without dereferencing, invoking, or reading credentials.
