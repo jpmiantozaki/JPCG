@@ -33,3 +33,19 @@ Type `START` when prompted. Once script prints click prompt, tap visible *initia
 - Missing/unexpected snapshots: review logs and startup state; no automatic reinstallation.
 
 Main Phase40AF inner CONFIRM PathID4300 persistent Login() remains ON; never substitute server decisions or bypass PlayPark/ANLGarden VIP and Garden authorization.
+
+## Actual user Phase40AZ run — original first-stage connection ERROR, singleton still NULL (2026-10-22)
+
+User ran the guarded manual outer yellow LOGIN lifecycle test on disposable Nox62033, exact previously signed Phase40AW APK SHA256 `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e` verified. Manually clicked yellow first-stage LOGIN once, without entering credentials or clicking CONFIRM. Screenshot displays **"Web Error. Cannot connect to destination host"**, still on colorful "AUDITION NEXT GEN" landing page, so **credential-entry was not reached**. Device PID3919 log:
+```
+21:55:04.873 PHASE40AW_NATIVE_LIBRARY_LOADED
+21:55:16.886 PHASE40AW_SINGLETON_REFERENCE_NULL
+21:55:16.886 PHASE40AW_PROBE_12SEC STATUS=105
+21:55:28.876 PHASE40AW_SINGLETON_REFERENCE_NULL
+21:55:28.876 PHASE40AW_PROBE_24SEC STATUS=105
+[40AZ] RESULT: SINGLETON_NULL_AT_BOTH_SNAPSHOTS
+```
+
+**Interpretation:** Original connection/config stage failed *before* credential screen. This does not prove that PlayPark login host specifically was down or even which endpoint failed. The Phase40AW static singleton remained null, but the original yellow button is serialized directly to `LoginServerManager` component PathID4610 and its `ConnectToServer(false)` method, so a null static `Instance` does not by itself establish no live scene component. Independent original ARM64 disassembly confirms `ConnectToServer(bool)` RVA0x6A8488 calls `FetchServerData()` RVA0x6A84D0 and starts a coroutine. Source uses Unity request/error flow in `<FetchServerData>d__49.MoveNext()` RVA0x6A9864. It is therefore reasonable to prioritize URL/transport/network diagnostics and source-level lifecycle analysis, not more blind singleton polling or fake session handling.
+
+**Next:** Phase40BA captures existing Nox62033 Android connectivity/proxy/DNS state and Unity warning/error logcat **without rerunning the failing login action**. Determine host only if logs or original request code actually identify it. No APK change, no original callback suppression, no credentials and no protected emulator access.
