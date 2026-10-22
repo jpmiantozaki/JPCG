@@ -38,3 +38,26 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AW_Re
 Expected **only if true**: `PHASE40AW_PROBE_12SEC STATUS=110`, `PHASE40AW_PROBE_24SEC STATUS=110`, `READONLY_SINGLETON_SNAPSHOT_PASS`. If null: `STATUS=105`; preserve that result, don't force an instance. Logs and JSON in package `results/`. Optional rollback via `scripts/rollback_phase40aw_disposable_only.ps1` after collecting results.
 
 **Safety:** Experimentally loading arbitrary modules into third-party Unity compiled app can crash. Only disposable isolated environment. Startup of original game may independently contact game servers; network-isolate if zero game traffic required. No credentials, no login, no callback modification, no session manipulation. Never assume CGM membership overrides third-party PlayPark/ANLGarden VIP/session decisions.
+
+## User Phase40AW Nox62033 runtime result — singleton NULL (2026-10-22)
+
+User ran `scripts/run_phase40aw_full.ps1`, hash-guarded upgrade from exact prior Phase40AU SHA256 `cc80b36dda5adb9eca64633f1c70c16a6c7c15b4f5506a49f37411d5fe76f39a`. Built and signed new test APK SHA256 `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e`, same disposable test certificate `6fef57b71ce2f70af9cca1df6578620462ec55065a9151f78d0194386ebf25ed`; original 167-entry content and overlay parity PASS. ADB update exit0 and original Unity Activity launched on Nox62033. No login or credentials.
+
+Actual device log:
+```
+20:15:02.399 PHASE40AW_NATIVE_LIBRARY_LOADED (pid5803)
+20:15:14.407 PHASE40AW_SINGLETON_REFERENCE_NULL
+20:15:14.407 PHASE40AW_PROBE_12SEC STATUS=105
+20:15:26.403 PHASE40AW_SINGLETON_REFERENCE_NULL
+20:15:26.403 PHASE40AW_PROBE_24SEC STATUS=105
+[40AW] RESULT: SINGLETON_NOT_YET_INITIALIZED_OR_NULL
+```
+
+**Interpretation:** The class and static backing field are resolved, but field's value is NULL at two sampled times. Not evidence of an unavailable class/method (Phase40AU found Login metadata) and no proof of actual Unity Login scene lifecycle. Do not invoke Login(), manufacture a singleton, or disable CONFIRM.
+
+Independent static original ARM64 disassembly (archived `libil2cpp.so` SHA256 `fb569843b5955b0bbbebc143d5421942160d4dfe6f70cb7853e85cace8b02fc8`, matching Phase40AM installed native):
+- `LoginServerManager.get_Instance` RVA0x6A5850 reads the static reference.
+- `set_Instance` RVA0x6A5898 writes it.
+- `Awake` RVA0x6A58E4 contains conditional store of `this` to backing static field at approximately 0x6A5994-0x6A599C. This is strong static evidence that Awake is where a live instance normally populates the singleton. We have NOT proven Awake executed in Nox62033, and should not assert why it is null.
+
+Phase40AX next: capture current UI screen, activity/window snapshots and filtered Unity logs **without changing the APK** to decide if original Login scene/UI was even reached. No new native probe until context resolves the null.
