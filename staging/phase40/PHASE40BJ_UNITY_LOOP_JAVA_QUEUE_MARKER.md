@@ -68,3 +68,16 @@ One command after extracting to `D:\CGMTEST\CGM_Phase40BK_BJ_ResumeOnly`:
 powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40BK_BJ_ResumeOnly\scripts\run_phase40bk_resume_only.ps1'
 ```
 Signed APK contents untouched; protected 62030/31/32 untouched. The app's normal independent startup network activity is possible. Even if Java Unity loop marker PASS, managed IL2CPP C# callback/owner-thread safety, pre-submit CGM gate and original game/Garden session authorization remain unproven.
+
+## Phase40BK actual disposable Nox62033 user result — UNITY JAVA LOOP QUEUE PASS (2026-10-23)
+
+User ran the guarded Phase40BK **resume-only** runner on already installed test-signed Phase40BJ APK, without reinstall or login interaction. Console:
+```
+=== PHASE40BK RESULT: UNITY_JAVA_LOOP_QUEUE_MARKER_PASS ===
+10-23 02:31:06.732 I/CGMPhase40BJ(6438): PHASE40BJ_NATIVE_GATE_LIBRARY_LOADED (not invoked)
+10-23 02:31:21.745 I/CGMPhase40BJ(6438): PHASE40BJ_QUEUE_POSTED attempt=1
+10-23 02:31:28.562 I/CGMPhase40BJ(6438): PHASE40BJ_UNITY_LOOP_THREAD_MATCH_PASS (Java Runnable only; no Unity methods)
+```
+Result JSON and log at `D:\CGMTEST\CGM_Phase40BK_BJ_ResumeOnly\resume-results\Phase40BK_20261023_023050_cb1b5fbf\`. This confirms the Java Runnable posted to original UnityPlayer queue **executed and matched `UnityPlayer.m_MainThread`** in the disposable modified original Unity application. Marker from log: **Java Runnable only, no managed Unity/IL2CPP calls**.
+
+Interpretation: strong evidence of a usable Java Unity-engine loop task scheduling surface, but not sufficient to claim managed C# synchronization context, IL2CPP thread/domain safety, GC-pinned manager object, safe access to input fields, main-thread Unity scripting execution or callback interception. Main remaining engineering milestone is a harmless read-only managed runtime callback *from that loop*, with runtime identity checks and without invoking original Login(), SendLogin(), CONFIRM, membership ACTIVE or upstream auth/session APIs. Preserve rollback and guard exact disposable APK; protected Nox62030–62032 untouched.
