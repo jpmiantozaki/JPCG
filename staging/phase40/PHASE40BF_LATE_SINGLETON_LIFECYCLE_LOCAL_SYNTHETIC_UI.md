@@ -25,3 +25,28 @@ No original inner CONFIRM PathID4300 -> `Login()` component PathID4610 was disab
 ## Next recommended checkpoint: Phase40BH offline evidence audit
 
 Before another APK build, read `Phase40BF_Runtime_Report.json` and `Phase40BF_Native_Log.txt` already generated, and specifically inspect sample statuses/timestamps before and after the manual click, how many non-null vs null, and whether reference remained present. Do not publish pointers, credentials, device IDs, or raw query strings. Then design narrowly-scoped validation of scene-component identity, object-lifetime and Unity owner-thread safety; no direct invocation of Login() or replacement of server decisions merely because a pointer exists.
+
+## Phase40BH — user-supplied complete 10-sample temporal audit (2026-10-23)
+
+User pasted native log and JSON contents (source resides on user's Windows host). Critical correction to earlier narrative: report field `before_sample_max=6`, and **sample 6 was already non-null BEFORE user clicked outer yellow LOGIN**. Therefore **no causal claim** that the button initialized the singleton is justified. We observed a time-dependent transition that preceded manual click.
+
+Exact observed sequence in PID4504:
+
+| Sample | Time | Status | Interpreted |
+|---|---|---|---|
+| 1 | 01:42:44.748 | 105 | NULL |
+| 2 | 01:42:49.755 | 105 | NULL |
+| 3 | 01:42:54.762 | 105 | NULL |
+| 4 | 01:42:59.768 | 105 | NULL |
+| 5 | 01:43:04.772 | 105 | NULL |
+| **6** | **01:43:09.779** | **110** | **PRESENT; PRE-CLICK** |
+| 7 | 01:43:14.783 | 110 | PRESENT; POST-CLICK |
+| 8 | 01:43:19.789 | 110 | PRESENT; POST-CLICK |
+| 9 | 01:43:24.798 | 110 | PRESENT; POST-CLICK |
+| 10 | 01:43:29.805 | 110 | PRESENT; POST-CLICK |
+
+Native library logged loaded at 01:42:39.744. Transition from NULL to non-NULL occurred sometime **strictly between** sample5 01:43:04.772 and sample6 01:43:09.779 (subject to logging/sampling boundaries). Consecutive PRESENT samples 6–10 show field stayed non-null for those snapshots (~20 seconds), but do NOT establish lifetime/GC root safety, pointer equality/object identity, instance validity, thread correctness, or that `Awake()` specifically caused assignment. The 4 after-click statuses were `[110,110,110,110]`, and credential-entry UI visually appeared after a local synthetic config fetch and no-data TCP acceptance.
+
+Original `Login()` metadata discovered in Phase40AU; live instance reference sampled in BF/BH. **Still unresolved:** Unity owner-thread identity, MonoBehaviour validity, callback lifecycle, asynchronous policy gate integration, success continuation of original Login() exactly once without wrongly setting isLoginProcess, and official upstream session + ANLGarden/Game/Garden authority. No credentials or CONFIRM submission in Phase40BF.
+
+**Next engineering checkpoint suggested:** Read-only static assessment of existing Unity scene event dispatch and Android/Unity task queue to choose supported main-thread integration surface. Avoid another timed singleton poll or synthetic connection rerun. If runtime test eventually needed, use the existing disposable 62033 only, no Login()/SendLogin()/CONFIRM calls, no credentials, and human READY/CLICKED if UI interaction required.
