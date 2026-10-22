@@ -81,3 +81,13 @@ D:\CGMTEST\CGM_Phase40AY_Recover_AW_After_Uninstall\results\Phase40AY_20261022_2
 ```
 
 **Interpretation:** Repeat NULL snapshot after exact test-APK clean install supports null during observed untouched startup, but does **not establish** why, whether Unity login scene was active, Awake ran, or whether an authorized original-login callback exists. Need user screenshot + JSON/log before deciding on new instrumentation. Do not change listener, use credentials, or repeat APK rebuild by default. No test action targeted protected Nox62030/62031/62032.
+
+## User Phase40AY screenshot, JSON and log inspected — startup yellow LOGIN shown (2026-10-22)
+
+User uploaded `Phase40AY_Current_Screen.png`, `Phase40AY_Restore_And_Scene_Report.json`, `Phase40AY_Startup_Log.txt` directly. The **actual screenshot** clearly shows full-screen colorful "AUDITION NEXT GEN" splash with **large yellow "Login"** button centered and PlayPark mark upper right; footer version 1026. **No username/password inputs or inner CONFIRM button visible**. This is the **outer yellow LOGIN** stage from prior original two-button distinction, not the credential submission stage.
+
+JSON: target 127.0.0.1:62033, exact signed Phase40AW hash `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e`, native loaded true, singleton_null true, singleton_present false, login_invoked_by_test false, original_confirm_modified false, other_nox_touched false.
+
+Log: PID3092 native loaded 21:21:00.191; Unity engine 2021.3.45f1/il2cpp/arm64-v8a loaded 21:21:00-01; 12s and 24s `PHASE40AW_SINGLETON_REFERENCE_NULL STATUS=105` at 21:21:12.198/21:21:24.198. **Read-only scene diagnostic interpretation:** It's now independently confirmed that while the singleton was null, the app remained visually on its **initial yellow LOGIN screen**. Credential-entry screen (inner CONFIRM) was not displayed. This makes scene/manager lifecycle before vs after the **outer** LOGIN interaction the next high-value discriminating test. It does **not prove** how/when Awake assigns the manager singleton or that the initial button causes an instance.
+
+**Potential next phase Phase40AZ** should use existing intact Phase40AW test APK, verify exact APK, cold-start Unity on disposable Nox62033, have human manually press **outer yellow LOGIN only** early enough for the existing +12/+24s read-only native snapshots, then capture GUI/log. Warn that pressing outer LOGIN may connect the original PlayPark login server even with no credentials; no clicking inner CONFIRM, no username/password, no auth/Garden access, no modification of listener or APK. Do not auto-tap; don't target protected Nox. User can decline network contact. This is a hypothesis test, not verification the singleton will become nonnull.
