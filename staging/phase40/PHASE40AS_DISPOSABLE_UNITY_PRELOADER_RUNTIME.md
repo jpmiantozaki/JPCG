@@ -53,3 +53,25 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AS_Di
 ```
 
 Use the SAME new fresh Nox62033 instance only if it still has no original game app; protected Nox62030/31/32 off limits. No login, credentials, or official game/VIP/Garden sessions. Startup may contact original game's own backend unless test emulator networking externally disabled. Expect `PHASE40AP_NATIVE_LIBRARY_LOADED` log only if preloader/native library really loads inside the staged Unity app. This is not a working membership gate.
+
+## Phase40AS second user run — likely installed, script stopped on stderr 'Success' (2026-10-22)
+
+User reran corrected v2 script on fresh Nox62033. Verified exact signed APK SHA256 `446BEFE5692A552D17E8D1A6BF799E838112BE62E50ABAC101DE8B08EAB18EE1` and test signing certificate, Android API28 with ARM64 support, and confirmed no original CGM installed. The log reached:
+```text
+[40AS] Install signed staging APK on NEW Nox62033 only
+nox_adb.exe : Success
+... script run_phase40as_disposable_only.ps1:23 char:16
+$lines = @(& $Exe @Params 2>&1)
+NativeCommandError
+```
+Likely install success on emulator, but **not yet independently verified by device pull/hash**. PowerShell 5.1 converted Nox ADB's stdout/stderr success line into an error because `$ErrorActionPreference = 'Stop'`; the script **never reached Unity Activity launch or runtime log capture**. Do NOT repeat Phase40AS installer on now-occupied Nox62033.
+
+### Phase40AT — Resume *installed* app ONLY
+
+New kit `CGM_Phase40AT_Resume_Installed_Preloader.zip` SHA256 `17d51f451e6fe2c3191a294e12959d7e84dea8a23d6fe99605aa8d1a58ccaf2e`. Uses Windows `Start-Process` stdout/stderr redirection + exit-code checks to avoid the PS5.1 NativeCommandError on a successful ADB stderr string. Pins the signed local Phase40AR APK SHA256 and hardcoded disposable `127.0.0.1:62033`, checks Android API28/arm64 and exact package, pulls installed `base.apk` read-only, requires its SHA256 equals exact Phase40AR signed APK, and **then** launches `com.DeathToB.ANLGarden/com.unity3d.player.UnityPlayerActivity`. After 12 sec captures `CGMPhase40AP`/AndroidRuntime log and saves JSON/text in own results folder. **No install, reinstall, uninstall, push, modification of original Login() or protected emulators 62030/31/32.** It stops if app is missing or its installed bytes differ. The original app's ordinary startup may still cause network activity; no credentials or login tests.
+
+One-command Windows test, after extracting ZIP into `D:\CGMTEST`:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AT_Resume_Installed_Preloader\scripts\run_phase40at_resume_only.ps1'
+```
+Output `results\Phase40AT_Runtime_Result.json` and `results\Phase40AT_Preloader_Log.txt`. Static program safety tests PASS, ZIP CRC PASS, **Windows run not yet performed**. Even `LOADER_ONLY_RUNTIME_PASS` only proves Java preloader and native ELF loaded during original compiled CGM startup; CONFIRM callback and membership ACTIVE/PlayPark/Garden authorization remain untested.
