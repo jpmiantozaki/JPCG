@@ -31,3 +31,23 @@ Extract ZIP into `D:\CGMTEST\CGM_Phase40BE_Manual_Ready_503_Proof` and run:
 powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40BE_Manual_Ready_503_Proof\scripts\run_phase40be_manual_ready.ps1'
 ```
 Then follow `START`, wait for yellow screen and type `READY`, click outer yellow once, then `CLICKED` after observing response. Report `results\Phase40BE_<timestamp>\Phase40BE_Result.json` and sanitized local route log. Runtime may independently contact pre-existing upstream server, not suitable for strictly zero-external-traffic test.
+
+## Actual Phase40BE result: PASS on disposable Nox62033 (2026-10-23)
+
+User ran `scripts/run_phase40be_manual_ready.ps1` with START → waited for full Unity launch → READY → manually clicked only outer yellow LOGIN once → CLICKED after observing the response. Same Phase40AW APK SHA256 `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e` verified on Nox62033.
+
+Actual console:
+```text
+[40BE] RESULT: EXPECTED_LOCAL_AUTHENTICATE_HIT_503 ; /authenticate.php hits=1 ; total requests=1
+[40BE] CLEANUP: remove ONLY tcp:8091 reverse mapping from Nox62033.
+[40BE] CLEANUP: stop disposable local 503 responder.
+[40BE] Cleanup attempted. No game APK modified; protected emulator instances untouched.
+```
+User screenshot displays original Unity yellow LOGIN background with alert `Web Error. HTTP/1.1 503 Service Unavailable` (distinct from Phase40AZ/BC `Cannot connect to destination host`).
+
+**Conclusions:**
+1. Original compiled CGM first-stage outer LOGIN uses the mapped `/authenticate.php` path with a functioning Nox62033->host port8091 ADB reverse, and the app surfaces the fail-closed HTTP503 error as expected.
+2. Phase40BC `0 requests` is **not** proof of failed routing: user said game needed ≥1 minute to load, previous script waited only 35 seconds. Manual READY/CLICKED timing resolves that test deficiency.
+3. The temp host does NOT return successful configuration, a login/game packet or Garden entitlement. No username/password, inner CONFIRM, CGM ACTIVE or official PlayPark/ANLGarden session occurred.
+4. This does **not** prove the 12/24-second native singleton snapshot will change; those probes are timed from app startup, typically before manual click.
+5. Next useful non-bypass diagnostic should *not* repeat 503 route confirmation. Instead inspect known Phase26L local synthetic configuration fixture and its constraints, then—if warranted and authorized—test a strictly local, synthetic, fail-closed configuration transition to credential UI, without entering credentials or contacting real upstream game auth or claiming a valid session. Keep rollback and no PlayPark/Garden bypass requirements.
