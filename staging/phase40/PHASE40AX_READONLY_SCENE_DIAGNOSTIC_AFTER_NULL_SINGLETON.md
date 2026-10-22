@@ -26,3 +26,16 @@ Send `results\Phase40AX_Current_Emulator_Screen.png` and `results\Phase40AX_Scen
 - **No Windows PS execution, no screenshot retrieval, no managed component instance or Login() execution tested by assistant.**
 - Do not modify original PathID4300 -> Login() or upstream authorization/session handling.
 - Retain protected Nox62030/62031/62032; only disposable Nox62033 for optional observation.
+
+## User initial Phase40AX run: STOP at package-filter guard (2026-10-22)
+
+User ran `run_phase40ax_readonly.ps1` against disposable Nox62033; it stopped at line34 `Expected CGM disposable test package not found; no other app touched.` The original script checked only `adb shell pm list packages com.DeathToB.ANLGarden` against one strict line regex, without printing raw package-manager output. **Do not infer that the app was actually uninstalled**: immediately preceding Phase40AW log reports a verified successful signed test APK install/Unity startup; but the target instance or package state might since have changed. This initial Phase40AX invocation did not capture a screen or change the app.
+
+Corrected read-only kit `CGM_Phase40AX_NoInstall_Scene_Diagnostics_Fix.zip`, SHA256 `6b22727bb48f9d6b6afa4d7fc23fad6c4b4c71997a6a8c5b380737fda66f5c24`, created with (a) exact `pm path` and both filtered+unfiltered `pm list packages` checks, (b) raw ADB stdout/stderr evidence saved on both success/failure, (c) binary-preserving ADB screenshot via .NET output BaseStream, (d) report includes path/list discovery booleans. Static safety regression and ZIP CRC PASS. **Windows/Nox test remains pending**. It does not install/reinstall/edit/launch/click anything or target protected instances.
+
+After extract in `D:\CGMTEST`, run:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AX_NoInstall_Scene_Diagnostics_Fix\scripts\run_phase40ax_readonly.ps1'
+```
+
+If package genuinely absent or otherwise unconfirmed, STOP and inspect `results/package_path_stdout.txt`, `results/package_listing_all_stdout.txt`. Don't auto-reinstall or infer a Unity scene state. If found, retrieve current screenshot and JSON. No login, original CONFIRM alteration or third-party session authorization test.
