@@ -49,3 +49,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AU_Or
 ## What it would and would not prove
 
 A PASS would prove the already-loaded JNI library can locate original managed Login() method metadata within the actual compiled Unity process (in a disposable test-signed APK). **It would not** prove an instance of LoginServerManager, safe Unity-owner-thread callback, bypass-free pre-submit suppression, member ACTIVE authorizing original login, unchanged official PlayPark upstream auth or independent ANLGarden VIP/Garden session acceptance. Original CONFIRM persistent binding PathID4300->Login() component PathID4610 is never touched by Phase40AU. Avoid unsupported patching/hooking or upstream VIP/session bypass.
+
+## Windows Phase40AU build PASS; installer marker detection STOP (2026-10-22)
+
+User ran `scripts/run_phase40au_full.ps1`. Full NDK/D8 rebuild, signed package identity, same Phase40AR test certificate `6fef57b71ce2f70af9cca1df6578620462ec55065a9151f78d0194386ebf25ed`, preservation of all 167 original APK ZIP payloads and overlay byte hashes PASS. Windows output verified previous installed Nox62033 app is exact Phase40AR signed APK SHA256 `446befe5692a552d17e8d1a6bf799e838112be62e50abac101de8b08eab18ee1`. Newly built Phase40AU signed test APK SHA256 `cc80b36dda5adb9eca64633f1c70c16a6c7c15b4f5506a49f37411d5fe76f39a`.
+
+The script then called `adb install -r` but STOPPED at `ADB installer did not say Success:` with blank captured stdout. The `Adb` helper uses `Start-Process` with separate stdout/stderr and asserts exit code 0, but **returns stdout only**; some Nox ADB versions put `Success` on stderr. Thus, successful ADB exit is implied by reaching that check, but actual installed bytes are **not yet verified** and Unity launch / IL2CPP read-only method discovery **did not run as part of this script**. No conclusion yet on native metadata lookup.
+
+### Phase40AV guarded completion
+
+New conversation kit `CGM_Phase40AV_Guarded_Installed_AU_Recovery.zip` SHA256 `e519e4609b8ca63c9d574a2d66fbfb7514f148068d4744a1cc52328437480a66`. Python static guard regression PASS and ZIP integrity PASS. Windows runtime not yet run.
+
+After extracting to `D:\CGMTEST\CGM_Phase40AV_Guarded_Installed_AU_Recovery`, one command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AV_Guarded_Installed_AU_Recovery\scripts\run_phase40av_complete.ps1'
+```
+
+This read-only pulls Nox62033 installed `com.DeathToB.ANLGarden` base.apk first and accepts **only** Phase40AU exact SHA (skip install) or Phase40AR exact SHA (perform one guarded update using Phase40AU previously built APK); any other SHA or absent app stops. Installed Phase40AU exact SHA required before launch. Uses process-exit-check + both ADB output streams. Clears disposable logcat, uses `am start -S` to fresh-launch Unity without clicking/login, waits for the 12/24 second probes, captures `CGMPhase40AU`/AndroidRuntime logs, emits JSON. Never connects to protected Nox62030/31/32 or accesses credentials, membership endpoint, official PlayPark/Garden login/session flows. Original app normal startup might independently contact servers; externally isolate disposable emulator when offline assurance is needed.
+
+Even a Phase40AU method-discovery PASS proves only `LoginServerManager.Login()` managed metadata resolution, **not invocation, owner-thread instance lookup, persistent CONFIRM suppression, fresh membership ACTIVE, or PlayPark/ANLGarden VIP/Garden acceptance**.
