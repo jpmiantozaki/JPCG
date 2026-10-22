@@ -39,3 +39,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AX_No
 ```
 
 If package genuinely absent or otherwise unconfirmed, STOP and inspect `results/package_path_stdout.txt`, `results/package_listing_all_stdout.txt`. Don't auto-reinstall or infer a Unity scene state. If found, retrieve current screenshot and JSON. No login, original CONFIRM alteration or third-party session authorization test.
+
+## Follow-up Phase40AX v2 user result — CGM package genuinely absent / accidental uninstall suspected
+
+User ran the corrected v2 Phase40AX no-install diagnostic on Nox62033. Both package discovery routes failed to confirm `com.DeathToB.ANLGarden`; `pm path` exited 1. Script stopped before screenshot or game access. User said: "I think the reason is I accidentally uninstalled the last APK." This is consistent with the evidence, but actual full package-query outputs were not uploaded.
+
+Important: The last **previously proven Phase40AW** test-signed original CGM APK remains on the user's Windows host at `D:\CGMTEST\CGM_Phase40AW_ReadOnly_Login_Instance_Probe\build\Phase40AW_SIGNED_TEST_ONLY.apk`, SHA256 `9033a6bcfae4cf39b8a1d1c0368fb3bc6cf0d8235aa8846deceeca207691e39e`. Original test certificate `6fef57b71ce2f70af9cca1df6578620462ec55065a9151f78d0194386ebf25ed`. Uninstalling from disposable Nox62033 does NOT erase prior runtime proof (Phase40AU/AV metadata status 100, Phase40AW singleton null status 105), although any disposable app data lost during uninstall is not recoverable from a fresh install unless backed up.
+
+### Phase40AY guarded recovery package (prepared, not run)
+
+Conversation artifact: `CGM_Phase40AY_Recover_AW_After_Uninstall.zip` SHA256 `9e2269e2772ac24d6a4f5a1d32516ebf13e82fc4f5803f9d3e750d9db9ffe89c`. Pure Windows PowerShell runner plus README. ZIP CRC and static safety tests PASS. **Windows execution not yet tested**.
+
+Extract to `D:\CGMTEST\CGM_Phase40AY_Recover_AW_After_Uninstall`; run one command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'D:\CGMTEST\CGM_Phase40AY_Recover_AW_After_Uninstall\scripts\run_phase40ay_recover_aw.ps1'
+```
+
+Script requires exact local Phase40AW signed APK SHA256, connected Nox62033 (Android API28 and arm64), consistent package absent/present evidence from unfiltered `pm list packages` and `pm path`. If absent, installs approved signed AW test APK once on **only** Nox62033; if present, skips installation. Always read-only pulls installed base.apk and requires exact SHA256 before launch; then freshly launches Unity original Activity without LOGIN, waits 30s, collects focused Unity/Phase40AW log, activity state, PNG screenshot and JSON into timestamped results folder. No additional Java/native build, no original Login/CONFIRM modification, no real credentials, no network requests by the script itself. **Normal app startup can independently contact original servers**; network isolate if strict offline test required. No protected Nox62030/31/32 touched.
+
+The screenshot and activity state are **context clues only**, not proof that `LoginServerManager.Awake()` executed or that original runtime AUTH-FIRST injection is complete. If report/screenshot contains user account details, redact them before sharing. Do not proceed to active login tests or server-session manipulation.
