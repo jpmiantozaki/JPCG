@@ -27,3 +27,14 @@
 4. No original Android APK changed, Nox touched, external authentication requests made, production Render/Cloudflare code modified, or real game/Garden login tested.
 
 **Next actual product dependency:** A real independent backend session processor capable of obtaining legitimate login/CCU/game/Garden responses from the actual supported game servers. It cannot be synthesized from the parsed request/response field names. We should not create more repetitive membership/JNI tests or claim full functionality until a genuine provider-compatible server path is available.
+
+
+## Windows verification supplied by user — 2026-10-23
+
+User executed locally:
+
+`& 'D:\CGMTEST\PHP\php.exe' 'D:\CGMTEST\CGM_Upstream_Session_Continuity_v3\tests\run.php'`
+
+Actual terminal output ended `ALL 37/37 PASS`. Observed checks include original protected request and exact upstream encrypted response preservation, stage-0 CGM ACTIVE admission, matching stage-1 relay continuation, unknown or expired session rejection, INACTIVE/EXPIRED VIP denial, upstream rejection preservation, membership/processor outage fail-closed behavior, HMAC-only staging state, and no synthesized game-session success.
+
+This adds user-confirmed Windows local PHP test execution to the prior assistant-local 37/37 and 9/9 synthetic tests. **No real MOD/BASE-independent provider session processing, game login, CCU or Garden entry was demonstrated.** The new test output does not show deployed JPCG public routes or a changed APK. Next engineering decision must address origin/provider-compatible session processing, not repeat the same PHP policy or Unity runtime checks.
