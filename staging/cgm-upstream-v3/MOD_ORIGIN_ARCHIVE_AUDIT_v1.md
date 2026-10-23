@@ -45,3 +45,22 @@ The user inspected the sanitized audit JSON and provided these exact classificat
 | 1 | False | INCOMPLETE_SUCCESS_METADATA | True | True |
 
 These are four **success-shaped** responses (one stage0 and three stage1), not authenticated provider/Garden success verification. The missing origin and HTTP status explain why the strict archive audit classified neither BASE nor MOD positive. They might be pre-existing historical BASE diagnostics, but that attribution is **not established**. The four records cannot be assumed to belong to a single session without preserved correlation metadata. Do not repeat the global archive scan. The next finite evidence action is **provenance-only**: inspect safe record source fingerprints/labels and adjacent structured `[CGM_SESSION_BRIDGE]` upstream_host markers, avoiding raw log lines or query strings, then classify origin if and only if timestamp/source correlation supports it. If no such metadata exists, record the origin as unresolvable instead of inventing MOD success.
+
+
+## One-source provenance final outcome — 2026-10-23
+
+The user executed the source-specific provenance script against `source-91fcda21919f` and provided:
+
+```text
+source_matched: YES
+response_records: 4
+bridge_origin_markers: BASE=0 MOD=0 OTHER=0
+#1 stage=0 bytes=67 relay_session_bytes=12 origin=UNKNOWN http=MISSING hex_flag=MISSING servertype_field=MISSING status_field=MISSING upstream_host_field=MISSING
+#2 stage=1 bytes=22 relay_session_bytes=12 origin=UNKNOWN http=MISSING hex_flag=MISSING servertype_field=MISSING status_field=MISSING upstream_host_field=MISSING
+#3 stage=1 bytes=25 relay_session_bytes=12 origin=UNKNOWN http=MISSING hex_flag=MISSING servertype_field=MISSING status_field=MISSING upstream_host_field=MISSING
+#4 stage=1 bytes=17 relay_session_bytes=12 origin=UNKNOWN http=MISSING hex_flag=MISSING servertype_field=MISSING status_field=MISSING upstream_host_field=MISSING
+```
+
+**Final classification:** `UNATTRIBUTABLE_SUCCESS_SHAPED_RECORDS`, not verified MOD or BASE success. All four are from one source file, not necessarily one login session. `data_hex_valid=false` in the previous audit was a default substituted for missing fields, **not** a proven invalid hex response. The stage-0 67-byte response and 12-byte session cannot be attributed to MOD or compared as paired transformation with the archived 58-byte BASE request / ~63-byte BASE response. No source-local origin markers exist.
+
+**Stop condition reached:** do not keep scanning this source or repeating membership/continuity tests; it cannot supply upstream provenance that was not logged. The next engineering input must be a genuine source-attributed successful MOD-origin exchange obtained via permitted/legitimate access, documented upstream processor behavior, or directly usable owned server implementation. Do not route credential-bearing packets to unknown servers, forge authentication success, or interpret synthetic v3 tests as independent authenticated Garden access.
