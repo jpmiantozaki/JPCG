@@ -35,3 +35,14 @@ The package was extended after the initial checkpoint to include `tests/integrat
 Final ZIP `CGM_Upstream_Gated_Staging_v2.zip` SHA256 **`29526e2ece570cafaaa41a3dfdd26ed16083e174478a91bb47de2b03c70c0495`**, 8 entries, ZIP CRC PASS. Contains 3 staged PHP files, 2 test files, README, manifest and full offline test output. Stage PHP source is also tracked in this branch under `staging/cgm-upstream-v2/patch/public/`. No files were copied into the live `public/` directory.
 
 **Server-side gap remains explicit:** original/official response values `data` and `session` cannot be inferred from metadata/client field names. This module verifies CGM admission and passes original request through only to an explicitly configured existing origin; it does not implement the MOD upstream's secret server-side session processor or eliminate its VIP dependency. Further client RE testing or endpoint rewriting alone will not manufacture a legitimate Game/Garden session.
+
+
+## Windows user execution confirmation — 2026-10-23
+
+User ran the PHP policy suite locally:
+
+`& 'D:\CGMTEST\PHP\php.exe' 'D:\CGMTEST\CGM_Upstream_Gated_Staging_v2\tests\run.php'`
+
+Actual terminal result: **ALL 32/32 PASS**, including ACTIVE explicit-existing-processor pass-through, INACTIVE/EXPIRED VIP denial, checksum tampering rejection, malformed/stage1 fail-closed behavior, missing processor rejection, and no game-session fabrication. This is user-confirmed execution on Windows, not merely assistant's offline tests.
+
+No evidence in this run that the staged route was deployed, that the original APK interacted with this gate, that any official login succeeded, or that an independent session processor exists. Next actual product dependency: complete compatible login/game session processing for genuinely accepted upstream sessions; no additional Unity instrumentation or repeated VIP policy testing needed.
