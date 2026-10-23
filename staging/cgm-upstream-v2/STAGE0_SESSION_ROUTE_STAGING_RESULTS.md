@@ -27,3 +27,11 @@ The known client `MGRelayResponse` JSON fields are `error,message,data,servertyp
 Run only the offline test using synthetic fixture bytes. After review, copy the three `patch/public/` files to a **local staging checkout** of the JPCG repository; do not deploy or set feature flag in production. Real `/session.php` requests are password-bearing GET queries, so configure query-string redaction for any future permitted live traffic. Do not enable stage0 feature in a public deployment until request logging, session state, backend authority and end-to-end compatibility are solved.
 
 This report supersedes exploratory Java/JNI/Unity work as the immediate route: focus on server admission and complete compatible session processing, without altering Android client code.
+
+## Final packaged source and additional route-level checks
+
+The package was extended after the initial checkpoint to include `tests/integration_cli.py`, which executes the **actual staged PHP `session.php` file** with temporary local mock dependencies rather than merely unit-testing the admission function. Checks: flag-off unchanged bridge, ACTIVE exact original protected packet forwarded to local mock bridge, INACTIVE encrypted-failure logical payload and no session, ACTIVE unconfigured processor fail closed. All **4/4 CLI integration tests PASS**. These are synthetic test data and no network, game, APK or production operations.
+
+Final ZIP `CGM_Upstream_Gated_Staging_v2.zip` SHA256 **`29526e2ece570cafaaa41a3dfdd26ed16083e174478a91bb47de2b03c70c0495`**, 8 entries, ZIP CRC PASS. Contains 3 staged PHP files, 2 test files, README, manifest and full offline test output. Stage PHP source is also tracked in this branch under `staging/cgm-upstream-v2/patch/public/`. No files were copied into the live `public/` directory.
+
+**Server-side gap remains explicit:** original/official response values `data` and `session` cannot be inferred from metadata/client field names. This module verifies CGM admission and passes original request through only to an explicitly configured existing origin; it does not implement the MOD upstream's secret server-side session processor or eliminate its VIP dependency. Further client RE testing or endpoint rewriting alone will not manufacture a legitimate Game/Garden session.
