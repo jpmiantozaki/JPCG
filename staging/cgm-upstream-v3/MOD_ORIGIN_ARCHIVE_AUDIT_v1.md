@@ -31,3 +31,17 @@ Sanitized report: D:\CGMTEST\CGM_MOD_Origin_Evidence_Audit\results\mod_evidence_
 **Interpretation:** The user Windows scan found only four parseable structured markers, zero qualifying BASE and MOD response outcomes. Do **not** imply this means either service is broken: prior archived BASE success was already evidenced in separately retained narrative/sanitized results. Current tool only parses explicit `[CGM_SESSION_RESPONSE] {...}` lines; it ignores ZIP/7z and raw/older format logs, logs with >8192-character lines, and individual files >8MB. `scan_complete=YES` indicates the traversal stayed below the traversal cap without a propagated iterator error, not that all possible archived formats were searched.
 
 **Next step is targeted classification, not repeat entire archive scan:** inspect the already-created sanitized JSON for `counts.UNKNOWN.response_records`, `files_skipped`, and the four allowed `records[]` fields: `origin,stage,http_status,error,classification,data_present,relay_session_present`. No raw log/ciphertext requested. If four entries are diagnostic stubs or missing `upstream_host`, no MOD-positive evidence remains. The missing MOD-origin successful session response should remain an explicit data gap; do not fabricate upstream packet adaptation.
+
+
+## Four sanitized records — direct user-provided table (2026-10-23)
+
+The user inspected the sanitized audit JSON and provided these exact classifications (all `origin=UNKNOWN`, no `http_status` value):
+
+| stage | error | classification | data_present | relay_session_present |
+|---|---|---|---|---|
+| 0 | False | INCOMPLETE_SUCCESS_METADATA | True | True |
+| 1 | False | INCOMPLETE_SUCCESS_METADATA | True | True |
+| 1 | False | INCOMPLETE_SUCCESS_METADATA | True | True |
+| 1 | False | INCOMPLETE_SUCCESS_METADATA | True | True |
+
+These are four **success-shaped** responses (one stage0 and three stage1), not authenticated provider/Garden success verification. The missing origin and HTTP status explain why the strict archive audit classified neither BASE nor MOD positive. They might be pre-existing historical BASE diagnostics, but that attribution is **not established**. The four records cannot be assumed to belong to a single session without preserved correlation metadata. Do not repeat the global archive scan. The next finite evidence action is **provenance-only**: inspect safe record source fingerprints/labels and adjacent structured `[CGM_SESSION_BRIDGE]` upstream_host markers, avoiding raw log lines or query strings, then classify origin if and only if timestamp/source correlation supports it. If no such metadata exists, record the origin as unresolvable instead of inventing MOD success.
