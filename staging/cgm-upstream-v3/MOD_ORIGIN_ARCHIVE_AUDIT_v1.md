@@ -12,3 +12,22 @@ Operation: user extracts to `D:\CGMTEST\CGM_MOD_Origin_Evidence_Audit\` and runs
 Only structured `[CGM_SESSION_RESPONSE]` JSON markers are parsed. A MOD positive record requires `upstream_host=m.cabahug.xyz`, HTTP200, logical error=false, stage0 or stage1, nonempty packet/session metadata, valid hex indicator. Includes source path fingerprint, not path or source lines, and never exports packet bodies, passwords, identifiers, cookies or session values. Excludes the audit package itself. Aggregates over all records even if detailed report is capped. Does not access other people's servers or APKs. Matching records are **candidates**, not proof of legitimate provider acceptance or same session. Missing records reflect missing evidence in scanned files, not evidence that the MOD backend fails.
 
 Decisional next step: if an actual MOD-origin candidate positive shape exists, compare its response/relay session lengths and stage semantics to earlier BASE shapes. Otherwise stop speculative endpoint equivalence claims until there is credible MOD-origin success evidence or suitable documented session processor. Do not manufacture a successful game session.
+
+
+## User Windows run — 2026-10-23
+
+User executed the archive audit on `D:\CGMTEST` and shared only the terminal result:
+
+```text
+Files considered: 3231
+Structured session records: 4
+Scan complete: YES
+BASE: stage0-positive=0 stage1-positive=0 rejected=0
+MOD: stage0-positive=0 stage1-positive=0 rejected=0
+RESULT: NO_VERIFIED_MOD_SUCCESS_METADATA_IN_SCANNED_FILES
+Sanitized report: D:\CGMTEST\CGM_MOD_Origin_Evidence_Audit\results\mod_evidence_20261023_123335_f739b7.json
+```
+
+**Interpretation:** The user Windows scan found only four parseable structured markers, zero qualifying BASE and MOD response outcomes. Do **not** imply this means either service is broken: prior archived BASE success was already evidenced in separately retained narrative/sanitized results. Current tool only parses explicit `[CGM_SESSION_RESPONSE] {...}` lines; it ignores ZIP/7z and raw/older format logs, logs with >8192-character lines, and individual files >8MB. `scan_complete=YES` indicates the traversal stayed below the traversal cap without a propagated iterator error, not that all possible archived formats were searched.
+
+**Next step is targeted classification, not repeat entire archive scan:** inspect the already-created sanitized JSON for `counts.UNKNOWN.response_records`, `files_skipped`, and the four allowed `records[]` fields: `origin,stage,http_status,error,classification,data_present,relay_session_present`. No raw log/ciphertext requested. If four entries are diagnostic stubs or missing `upstream_host`, no MOD-positive evidence remains. The missing MOD-origin successful session response should remain an explicit data gap; do not fabricate upstream packet adaptation.
