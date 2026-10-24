@@ -1,0 +1,18 @@
+# Build from the repository root:
+# docker build -f staging/cgm-relay-privacy-v1/Dockerfile.staging -t jpcg:relay-privacy-test .
+# STAGING ONLY: this Dockerfile does not replace production Dockerfile.
+FROM php:8.3-apache
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev \
+    && docker-php-ext-install pdo_pgsql \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /var/www/html
+COPY public/ /var/www/html/
+COPY staging/cgm-relay-privacy-v1/apache-cgm-vhost.conf /etc/apache2/sites-available/000-default.conf
+# Debian's other-vhosts logging can independently record complete %r request
+# lines. Remove it as well as replacing the site's default 'combined' log.
+RUN rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf \
+    && apache2ctl configtest
+EXPOSE 80

@@ -1,0 +1,79 @@
+[
+  {
+    "request_stage": 0,
+    "request_bytes": 58,
+    "response_request_stage": 0,
+    "response_request_bytes": 58,
+    "response_bytes": 63,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  },
+  {
+    "request_stage": 1,
+    "request_bytes": 16,
+    "response_request_stage": 1,
+    "response_request_bytes": 16,
+    "response_bytes": 21,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  },
+  {
+    "request_stage": 1,
+    "request_bytes": 16,
+    "response_request_stage": 1,
+    "response_request_bytes": 16,
+    "response_bytes": 28,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  },
+  {
+    "request_stage": 1,
+    "request_bytes": 8,
+    "response_request_stage": 1,
+    "response_request_bytes": 8,
+    "response_bytes": 14,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  },
+  {
+    "request_stage": 1,
+    "request_bytes": 14,
+    "response_request_stage": 1,
+    "response_request_bytes": 14,
+    "response_bytes": 26,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  },
+  {
+    "request_stage": 1,
+    "request_bytes": 9,
+    "response_request_stage": 1,
+    "response_request_bytes": 9,
+    "response_bytes": 20,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  },
+  {
+    "request_stage": 1,
+    "request_bytes": 8,
+    "response_request_stage": 1,
+    "response_request_bytes": 8,
+    "response_bytes": 15,
+    "response_error": false,
+    "http_status": 200,
+    "origin": "anlgarden.com",
+    "relay_session_bytes": 12
+  }
+]
