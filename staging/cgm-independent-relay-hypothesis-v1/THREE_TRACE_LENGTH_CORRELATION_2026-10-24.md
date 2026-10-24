@@ -38,3 +38,10 @@ The previous seven-pair analyzer and its tests remain applicable to that narrow 
 **Highest-value next verified input**: legitimately authorized, privacy-reviewed command/response metadata including actual client command identifiers and game-service acceptance status; or licensed original/compatible server processor source. No credential-bearing GET logs, ciphertext or relay tokens, no live probes, and no repeated Nox, APK or synthetic-suite tests are justified by this checkpoint.
 
 **Branch-only documentation.** No changes to `main`, `public/session.php`, production routing, APKs, Nox environments, or official game services.
+
+
+## 2026-10-24 correction: embedded packet counters resolve apparent order
+
+Subsequent read-only inspection of the original eight-byte framed request headers recovered the per-session packet counter without inspecting credentials or payload bodies. In every archived cluster, Stage 1 `REQUEST_COUPLE_LEVEL` (`1F 0C`) bears counter **4**, while `REQUEST_ENTER_CHANNEL` (`09 00`) bears counter **5**. Consequently, the earlier observation that channel entry appears first in some **HTTP arrival logs** must **not** be interpreted as evidence that the Unity client *constructed* channel entry first. Concurrent HTTP requests can be logged out of packet-creation order. This correction is documented in [`FRAME_COUNTER_VS_HTTP_ARRIVAL_AUDIT_2026-10-24.md`](FRAME_COUNTER_VS_HTTP_ARRIVAL_AUDIT_2026-10-24.md).
+
+The embedded counter also rules out a transformation length determined solely by command, original frame length and packet counter: identical command/counter combinations have different output overheads across historical clusters. This does not prove a particular encryption algorithm or official server acceptance.
