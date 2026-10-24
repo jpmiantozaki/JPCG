@@ -69,7 +69,7 @@ final class CgmZeroTransformCandidate
                 }
                 $token = bin2hex(random_bytes(20));
                 $state[$token] = ['expires'=>min($now+self::TOKEN_TTL, $member['vip_expiry']),
-                    'id'=>$id, 'verified'=>false];
+                    'id'=>$id, 'ccu_request_seen'=>false];
                 // UNPROVEN: the original upstream may transform bytes before
                 // forwarding them. This is a test candidate, not game success.
                 try {
@@ -87,15 +87,16 @@ final class CgmZeroTransformCandidate
             }
             $session = $state[$relayToken] ?? null;
             if (!is_array($session) || $session['expires'] <= $now) return $blocked('UNKNOWN_OR_EXPIRED_RELAY');
+            // CCU request was merely observed in a local simulation; no server ACK was seen.
             // This is mobile relay continuity only: NEVER official auth.
-            if ($kind['kind'] === 'GAME_LOGON' && $session['verified'] !== true) {
+            if ($kind['kind'] === 'GAME_LOGON' && $session['ccu_request_seen'] !== true) {
                 return $blocked('VERIFY_CCU_FIRST_REQUIRED_FOR_SIMULATION');
             }
             $reply = self::reply('UNTRANSFORMED_RELAY_CANDIDATE', $encrypt, [
                 'error'=>false,'message'=>'','data'=>$hex,'servertype'=>1,
                 'session'=>$relayToken,'vip_expiry'=>0,
             ], true);
-            if ($kind['kind'] === 'VERIFY_CCU') $state[$relayToken]['verified'] = true;
+            if ($kind['kind'] === 'VERIFY_CCU') $state[$relayToken]['ccu_request_seen'] = true;
             return $reply;
         } catch (Throwable $exception) {
             // Never reveal exception messages, credentials or relay tokens.
