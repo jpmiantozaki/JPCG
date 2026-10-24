@@ -41,3 +41,10 @@ The 13:49 actual request ordering was `LOGIN → VERIFY_CCU → GAME_LOGON → U
 The remaining unknown is the **authorized upstream’s transformation of game-bound output bytes and the corresponding genuine game-service acceptance/identity/session binding**. Future progress would require legitimately obtained compatible intermediary source or strictly authorized, privacy-reviewed output-header/accepted-response evidence. Do not reverse the client's *inbound* decryptor without direction-specific proof.
 
 **No modifications:** `main`, production `public/session.php`, original APK, Nox, official game services, and earlier staging prototype remain unchanged.
+
+
+## 2026-10-24 correction: embedded packet counters resolve apparent order
+
+Subsequent read-only inspection of the original eight-byte framed request headers recovered the per-session packet counter without inspecting credentials or payload bodies. In every archived cluster, Stage 1 `REQUEST_COUPLE_LEVEL` (`1F 0C`) bears counter **4**, while `REQUEST_ENTER_CHANNEL` (`09 00`) bears counter **5**. Consequently, the earlier observation that channel entry appears first in some **HTTP arrival logs** must **not** be interpreted as evidence that the Unity client *constructed* channel entry first. Concurrent HTTP requests can be logged out of packet-creation order. This correction is documented in [`FRAME_COUNTER_VS_HTTP_ARRIVAL_AUDIT_2026-10-24.md`](FRAME_COUNTER_VS_HTTP_ARRIVAL_AUDIT_2026-10-24.md).
+
+The embedded counter also rules out a transformation length determined solely by command, original frame length and packet counter: identical command/counter combinations have different output overheads across historical clusters. This does not prove a particular encryption algorithm or official server acceptance.
