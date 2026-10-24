@@ -30,3 +30,12 @@ The full 38-case test script was executed locally, but was **not committed with 
 This candidate has no official network interface, a non-durable in-memory token map, and no authenticated identity binding. It is not the original legacy `session.php`; the production `public/session.php` has not been changed. No third-party server was contacted.
 
 A future step requires permission for a controlled original-service interoperability check or legitimately documented examples of packets actually accepted by the game servers. At that point, determine whether native packet forwarding is accepted byte-for-byte or needs an authorized transformation. A successful-looking HTTP envelope must never be mistaken for PlayPark login acceptance.
+## 2026-10-24 update: Stage 1 gap demonstrated, zero-transform remains NO-GO
+
+Direct disassembly now identifies **six** Stage 1 Unity game senders, not just the two supported by this hypothetical relay. The newly mapped command `09 00` (`SendRequestEnterChannel`) is particularly important because the authentic GameServer channel reply handler can trigger GardenServer connection. This staging candidate blocks it; even if Stage 0 worked, this incomplete implementation cannot reproduce the normal Garden entry path. Read the [complete Stage 1 native audit](ORIGINAL_UNITY_STAGE1_GARDEN_COVERAGE_AUDIT_2026-10-24.md).
+
+The original BASE-origin eligible record also showed a roughly 58-byte Stage 0 request and roughly 63-byte returned data packet. Hence *unconditional request-to-response byte identity* does not describe that original observed BASE behavior. No universal transformation can be inferred from the length difference.
+
+New **actual** source: [`Stage1CoverageInspector.php`](src/Stage1CoverageInspector.php), a read-only classifier, plus [39 offline checks](tests/stage1_coverage.php). The prototype's simulated CCU state is now named `ccu_request_seen` rather than `verified`; sending a CCU request is not an official GameServer acceptance event. Existing 38-case local regression still passes.
+
+**Do not deploy or connect this candidate to any live original game socket.** Its apparent positive response is deliberately synthetic, its relay token exists only in offline simulated memory, and no authorized, accepted original game session has been demonstrated.
