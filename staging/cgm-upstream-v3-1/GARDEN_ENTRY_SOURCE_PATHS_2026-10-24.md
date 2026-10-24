@@ -18,6 +18,18 @@ From original `dump.cs`, `AccountInfo.usersn` is `+0x20` and `AccountInfo.ccukey
 
 Normal BASE/MOD login previously mapped as authentic LoginServer responses populating user serial/CCU, GameServer CCU/logon continuation, and now a confirmed GameServer channel response triggering Garden. The alternative web/PIN path does **not** prove an externally supported provider, valid account verification, or working alternate Garden entry in current deployment. Do not interpret it as a bypass.
 
+
+## Verified native web/PIN call chain (direct call-sites only)
+
+- `LoginWebManager.WebLogin` region `0x6AA188-0x6AA32C` branches to `PinManager.LoadSecondPin` `0x6AA54C` at `0x6AA328`.
+- Web-view callback region makes an additional call to `LoadSecondPin` at `0x6AAAEC`.
+- `PinManager.SubmitSecondPin` calls `VerifyPin` at `0x6AC1A0` (VerifyPin wrapper RVA `0x6AC1C0`).
+- `PinManager.<VerifyPin>d__25.MoveNext` calls `FetchData` at `0x6ACF60` (wrapper RVA `0x6AC250`).
+- `PinManager.<FetchData>d__26.MoveNext` decodes account data, writes `userSN` and `CCU` to shared state, and calls Garden at `0x6ADAD0`.
+- `LoginWebManager.WebLogin` has no direct B/BL caller in the scanned native code; Unity UI events or delegates can be indirect. **This compiled call chain does not prove the web login is reached during the user's normal yellow-login flow, or that its provider is functioning/authorized.**
+
+These call-site facts were newly checked with a targeted original ARM64 binary cross-reference scan; they supplement but do not supersede the verified original LoginServer/GameServer path.
+
 ## Decision
 - Preserve original APK-facing endpoints and normal LoginServer/GameServer/Garden procedure. CGM ACTIVE is **membership only**, not PlayPark identity authentication or a Garden credential.
 - Treat mobile HTTP relay session token, web/PIN sessionKey and game/Garden userSN+CCU fields as distinct.
