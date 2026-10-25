@@ -161,3 +161,28 @@ This exact SHA-256 is the known-good Phase40BP signed APK, **not** the Phase40BV
 **Revised status:** The Phase40BU/Phase40BV original deny-branch execution remains **unresolved**, but **the latest session=1 observation is no longer evidence that the BV branch failed**. Prior method-pointer deny bytes were verified in the separate PIDs 4922 and 5139 only. Phase40BP is installed and is the safe restored baseline; do **not** run the Phase40BV exact-hash restore script against BP unless needed (it can return ALREADY_RESTORED).
 
 **Next action (do not repeat past build):** if a single final deny-only proof is needed to justify native sender-gate integration, use the already built `Phase40BV_SIGNED_TEST_ONLY.apk`, verify its hash and current BP installed identity, install it **once** on disposable Nox62033 (no build or folder cleanup), capture a fresh same-PID `LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES` marker, then conduct exactly one isolated CONFIRM test with CGM ACTIVE email + fictional password. Record `config/session/other`, method-pointer and progress/counter markers in that same PID, and restore exact BP. No real login credentials or live official service request, no modification of rollback 62030. Until such a correctly attested trial exists, no conditional sender-level native hook is justified.
+
+## Phase40BV same-process native witness + CGM ACTIVE UI gate (PID 3265)
+
+**New user-provided live filtered logcat, 2026-10-26 01:54–01:59 (UTC+08), disposable Nox `127.0.0.1:62033`:**
+
+```text
+10-26 01:54:17.152 PID 3265 CGMPhase40BP: VIP_GATE_LIBRARY_LOADED
+10-26 01:54:19.014 PID 3265 CGMPhase40BV: LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES
+10-26 01:54:50.538 PID 3265 CGMPhase40BV: LOGIN_PROGRESS_CLEAR
+10-26 01:58:46.282 PID 3265 CGMPhase40BP: CGM_VIP_NOT_APPROVED
+10-26 01:58:51.211 PID 3265 CGMPhase40BP: CGM_VIP_NOT_APPROVED
+10-26 01:58:55.574 PID 3265 CGMPhase40BP: CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:58:55.582 PID 3265 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 01:59:00.652 PID 3265 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+10-26 01:59:00.768 PID 3265 CGMPhase40BP: CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:59:00.769 PID 3265 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+```
+
+**Result: live same-PID witness PASS for code presence and eligibility UI.** Unlike the prior PID 5967 probe where the currently installed file was Phase40BP, the new process **3265** emits the BV-specific patched-instruction marker **and** the BP-compatible CGM ACTIVE / original CONFIRM enabled markers. This eliminates the old cross-PID conflation for this observation. It does **not** show that original `Login()` actually executed the deny branch, nor does it include a local `/session.php` request count from the same process.
+
+**Progress flag:** `LOGIN_PROGRESS_CLEAR` predates CGM ACTIVE by more than four minutes, and can be emitted as the first sampled baseline after the credential form appears. It is not evidence of an attempted or denied submission.
+
+**Next discriminator (one controlled test; not yet run in this evidence):** while the exact BV diagnostic is still installed, run the existing path-only `run_phase40bu_local_deny_probe.py` on the disposable 62033 with PHP8094 and TCP18992 synthetic fixtures. Only after the probe prints `PHASE40BU_SAFE_FIXTURE_ARMED_N0X62033`, use a legitimately owned CGM ACTIVE email, an entirely **fictional** password, and manually press original CONFIRM **exactly once while enabled**. Preserve the probe's `config/session/other` counts and current-PID `CGMPhase40BV` progress/counter witness markers; do not share raw URLs or credentials. A witnessed click with `session=0` supports denial; `session=1` would be an unexpected live request requiring branch/source attribution; neither implies PlayPark authentication. Always restore exact Phase40BP using BV's guarded restore when complete, and do not touch Nox 62030.
+
+**No installation, new APK, sender guard, official login, game/Garden session or backend deployment is claimed by this documentation update.**
