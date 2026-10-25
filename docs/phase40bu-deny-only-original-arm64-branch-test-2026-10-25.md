@@ -53,3 +53,24 @@ Only a successful, witnessed deny test would demonstrate that **a direct one-ins
 Integrate the previously compiled Phase40BR one-use, identity/epoch/TTL-bound CGM ACTIVE approval at the actual Login/Sender boundary; allow original `SendLogin()` unchanged once, and on deny take the existing return without setting `isLoginProcess=1`. That remains **NOT IMPLEMENTED**, as does the independent compatible official relay processor. No synthetic positive game sessions or upstream VIP bypass are justified by this experiment.
 
 **No main/default branch change, production mutation, Render/Cloudflare deployment, official login, PlayPark token handling, Nox device access or rollback `62030` access occurred during this offline checkpoint.**
+
+## Runtime observation: expected DENY failed (user-reported 2026-10-25)
+
+**New user-supplied Phase 40BU path-only probe output:**
+
+```text
+PHASE40BU_SAFE_FIXTURE_ARMED_N0X62033
+PHASE40BU_CONFIG_REQUEST_SEEN
+PHASE40BU_SESSION_ENDPOINT_REQUEST_SEEN count=1
+PHASE40BU_DENY_ONLY_FAILED_SESSION_REQUEST_SEEN
+PHASE40BU_COUNTS config=1 session=1 other=0
+PHASE40BU_ORIGINAL_CONFIGURATION_ROUTE_RESTORED
+```
+
+**Interpretation:** the local fixture received **one** `/session.php` request and intentionally rejected it. The predicted zero-request state was **not observed**. The helper reports that reverse routing was restored. This is a **failed deny-only expectation**, not proof that the patched ARM64 branch executed or failed to execute.
+
+**Important unresolved build identity:** the user supplied only the probe output, not the prerequisite build/install terminal marker `PHASE40BU_DENY_ONLY_INSTALLED_EXACT_APK_62033`. Inspection of `run_phase40bu_local_deny_probe.py` reveals that it checks the package exists using `pm path` but **does not verify its installed APK hash or embedded patch bytes**. Thus the probe can run against the previously installed Phase40BP, or another package, and report a false native-branch failure. **Do not repeat the login test until installed APK identity is verified read-only** by pulling only the `62033` base.apk and comparing its SHA-256 to the locally built `Phase40BU_SIGNED_TEST_ONLY.apk` and the exact Phase40BP hash `1941AB5D7E2D00C16B71C6B6139AE8869CF3CEEF0424245E18C6F8B319BD14E4`.
+
+**Second harness bug:** `main()` prints `PHASE40BU_DENY_ONLY_FAILED_SESSION_REQUEST_SEEN`, but its final return expression is `2 if cleanup_failed else 0`. Therefore a failed deny expectation can return **process exit code 0** if cleanup succeeds. An exit code of 0 does **not** mean the deny test passed. Future probes must fail when unexpected session requests are observed.
+
+**Next actions:** preserve the fixture output and native code, perform the read-only installed-APK hash check; if exact Phase40BU is installed, use the already supplied exact-hash restore script to return to Phase40BP on `62033` without another login attempt. If Phase40BP is still installed, do not run the Phase40BU restore script. If installed hash is unexpected, stop instead of overwriting any build. Further native runtime diagnosis depends on this identity result. No actual official PlayPark auth, Garden session, production deployment, or rollback Nox activity is implied.
