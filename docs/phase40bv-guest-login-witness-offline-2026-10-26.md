@@ -142,3 +142,22 @@ Earlier BV method-pointer attestations were obtained from PIDs **4922 and 5139**
 **Next step (no repeat login):** query retained **`CGMPhase40BV` logcat for PID 5967** and verify the *currently installed* APK's SHA-256 against Phase40BP `1941AB5D7E2D00C16B71C6B6139AE8869CF3CEEF0424245E18C6F8B319BD14E4` and the local known Phase40BV signed artifact. Read-only ADB `pm path` and `pull` only to 62033; preserve unique local inspection file names. If the application has been replaced since that run, present hash only proves current state, not historical state. **Do not run another CONFIRM test, patch or unguarded restore until build identity is resolved.**
 
 No official game authentication, successful server state or new independent upstream is demonstrated.
+
+## Correction after installed-APK hash check: Phase40BP is currently installed
+
+The user explicitly confirmed the Oct 26 repeated 8095 fixture test involved **exactly one original CONFIRM click while enabled**. The path-only fixture reported `config=1/session=1/other=0`. The provided filtered `CGMPhase40BP` log for PID 5967 shows an ACTIVE result followed by CONFIRM enabled, with no matching same-PID `CGMPhase40BV` marker in the pasted excerpt.
+
+**Fresh read-only installed-build attestation:**
+
+```text
+INSTALLED_SHA256=1941AB5D7E2D00C16B71C6B6139AE8869CF3CEEF0424245E18C6F8B319BD14E4
+RESULT: PHASE40BP_INSTALLED
+```
+
+This exact SHA-256 is the known-good Phase40BP signed APK, **not** the Phase40BV patched guest witness. Hence the most straightforward explanation for the `/session.php` request is the **original, allowed Phase40BP submission path**, not a failed executed Phase40BV deny branch. The check establishes **the currently installed APK**, not a historical absolute timestamp of which build executed during PID 5967. The user has not reported another install between the test and this hash inspection; preserve that distinction instead of claiming certainty about the past from a current hash.
+
+**Frida/logcat correction:** the follow-up command `adb -s 127.0.0.1:62033 logcat -d -s CGMPhase40BV:I '*:S'` emitted **`- waiting for device -`**. The subsequent `NO_BV_MARKERS_FOR_PID_5967` was derived from empty/unavailable output; it is **not a valid negative runtime observation**. If relevant in another test, verify ADB device state and the current process before interpreting an empty filtered log.
+
+**Revised status:** The Phase40BU/Phase40BV original deny-branch execution remains **unresolved**, but **the latest session=1 observation is no longer evidence that the BV branch failed**. Prior method-pointer deny bytes were verified in the separate PIDs 4922 and 5139 only. Phase40BP is installed and is the safe restored baseline; do **not** run the Phase40BV exact-hash restore script against BP unless needed (it can return ALREADY_RESTORED).
+
+**Next action (do not repeat past build):** if a single final deny-only proof is needed to justify native sender-gate integration, use the already built `Phase40BV_SIGNED_TEST_ONLY.apk`, verify its hash and current BP installed identity, install it **once** on disposable Nox62033 (no build or folder cleanup), capture a fresh same-PID `LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES` marker, then conduct exactly one isolated CONFIRM test with CGM ACTIVE email + fictional password. Record `config/session/other`, method-pointer and progress/counter markers in that same PID, and restore exact BP. No real login credentials or live official service request, no modification of rollback 62030. Until such a correctly attested trial exists, no conditional sender-level native hook is justified.
