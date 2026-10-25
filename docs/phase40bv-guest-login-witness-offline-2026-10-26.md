@@ -61,3 +61,23 @@ The user installed/launched the Phase40BV diagnostic APK and provided the follow
 **Next meaningful and bounded test** (only while the verified Phase40BV experimental APK is installed): a single user-witnessed inner CONFIRM click using CGM ACTIVE email + fictional password through the existing isolated PHP8094 / TCP18992 + path-only one-shot localhost `/session.php` rejecting fixture. Record the `CGMPhase40BV` login-progress and session-counter transition labels alongside the fixture's `config/session/other` counts. If the click or enabled state is not witnessed, zero session hits is inconclusive. The old Phase40BU probe is path-only and does not verify installed APK hash or report failure in exit code; check markers and installed identity, not its return code. No raw URL, account, token, packets or password in logs. Restore Phase40BP with Phase40BV's exact-hash script afterward. **This proposed click test has not been run** as of this log.
 
 No official game login, independent upstream, Garden session, production release or rollback 62030 access is implied.
+
+## Next run reported: zero local session requests but click not yet established (user screenshot, Oct 26)
+
+The user supplied a screenshot of the **existing Phase40BU path-only probe run against the current Phase40BV experiment**. The probe printed:
+
+```text
+PHASE40BU_CONFIG_REQUEST_SEEN
+PHASE40BU_ZERO_SESSION_REQUESTS_IN_OBSERVATION_WINDOW
+REQUIRES_USER_REPORT_CONFIRM_CLICKED_WHILE_ENABLED
+PHASE40BU_COUNTS config=1 session=0 other=0
+PHASE40BU_ORIGINAL_CONFIGURATION_ROUTE_RESTORED
+```
+
+**Interpretation: INCONCLUSIVE, not deny-branch PASS.** The local synthetic configuration request was observed, no `/session.php` endpoint was observed within the 75-second default window, and the probe reported restoration of previous route `8091 -> 8094`. The test harness cannot detect whether the user clicked CONFIRM. Its success/zero-hit marker is emitted for `config=1, session=0` even when no login submission was attempted.
+
+The filtered log window in the screenshot contains the earlier Phase40BV method-pointer markers from **PID 4922 and PID 5139**, but the newest process is **PID 5601**, for which the only shown event is `CGMPhase40BP: VIP_GATE_LIBRARY_LOADED` at `01:31:14.760`. No `CGMPhase40BV: LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES`, `LOGIN_PROGRESS_CLEAR/SET`, `CGM_VIP_ACTIVE_FOR_CURRENT_INPUT` or `CGM_VIP_ORIGINAL_CONFIRM_ENABLED` is visible **for PID 5601** in the supplied screenshot. The application displays a credential form, which does not establish a valid membership approval or a CONFIRM click.
+
+**Do not merge old-PID method-pointer evidence with current-PID endpoint counts.** The earlier two process witnesses remain verified on their own. Before assigning a successful native deny result to this latest run, require the user's statement that CONFIRM was actually clicked while enabled **within the probe window**, plus corresponding current-PID gate/witness events if available. If not clicked or not enabled, no new APK build or official login test is justified; the zero count simply shows an idle synthetic fixture. This distinction matters especially because the preceding Phase40BU experiment reported one unexpected `/session.php` request.
+
+No credentials, token, URI query or packet contents were captured. No production change or actual official PlayPark session is demonstrated. The working Phase40BP should be restored via the existing exact-hash Phase40BV restore script once the disposable diagnostic is complete.
