@@ -81,3 +81,33 @@ The filtered log window in the screenshot contains the earlier Phase40BV method-
 **Do not merge old-PID method-pointer evidence with current-PID endpoint counts.** The earlier two process witnesses remain verified on their own. Before assigning a successful native deny result to this latest run, require the user's statement that CONFIRM was actually clicked while enabled **within the probe window**, plus corresponding current-PID gate/witness events if available. If not clicked or not enabled, no new APK build or official login test is justified; the zero count simply shows an idle synthetic fixture. This distinction matters especially because the preceding Phase40BU experiment reported one unexpected `/session.php` request.
 
 No credentials, token, URI query or packet contents were captured. No production change or actual official PlayPark session is demonstrated. The working Phase40BP should be restored via the existing exact-hash Phase40BV restore script once the disposable diagnostic is complete.
+
+## User clarification: prior zero-request probe was idle; later PHP session hit
+
+User explicitly clarified: **“I didn't do anything while the probe is checking”** (2026-10-26). Therefore the previous `PHASE40BU_COUNTS config=1 session=0 other=0` cannot be interpreted as deny-path success; a manually witnessed CONFIRM click was absent.
+
+Separately, the user supplied filtered `CGMPhase40BP` events **for PID 5601**, recorded after that probe:
+
+```text
+10-26 01:36:27.105 CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:36:27.190 CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 01:36:32.125 CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+10-26 01:36:32.246 CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:36:32.271 CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 01:36:37.304 CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+10-26 01:36:37.446 CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:36:37.454 CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 01:36:40.202 CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+```
+
+Existing **synthetic PHP 8094** later emitted the path-only line:
+
+```text
+[Mon Oct 26 01:36:42 2026] [CGM_CONFIG_TEST] unavailable_route path=/session.php
+```
+
+The latter is not from the completed 8095 one-shot probe. The probe restores 8091 -> 8094 after its bounded observation, and the original PHP synthetic router has no supported game session route. The trace shows a local endpoint hit, not official acceptance. Because no precise click/route-generation correlation was captured for the later PHP request, **do not infer its initiating native method, submission time, or acceptance outcome**. `CGM_VIP_ORIGINAL_CONFIRM_DISABLED` at 01:36:40 does not by itself prove the endpoint hit resulted from an enabled-button click.
+
+**Next bounded action:** only if Phase40BV remains verified installed and synthetic PHP8094/TCP18992 are active, run the existing 62033-scoped BU path-only probe **one more time with a deliberate single CONFIRM click while `CGM_VIP_ORIGINAL_CONFIRM_ENABLED` is active and the 8095 probe says ARMED**. Use a fictional password and return only path counts, same-process witness markers and user-confirmed click. The 75-second default probe timer can be extended to 120 seconds by `--seconds 120` (bounded script limit). If no current-PID `LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES` marker, stop instead of assuming the old PID's witness applies. Afterward restore the exact working Phase40BP with the existing 40BV restore script; no rebuild, genuine credentials, official service test, raw URL logs or rollback 62030 access.
+
+**Status remains INCONCLUSIVE pending a witnessed click and contemporaneous labels.**
