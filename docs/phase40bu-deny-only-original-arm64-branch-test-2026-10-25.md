@@ -90,3 +90,23 @@ The prior path-only probe already observed `config=1 session=1 other=0`; therefo
 **Remaining hypotheses, unverified:** app execution may not have reached patched `Login()` callsite; the HTTP request may have originated via another native send route or a previously queued request; or the guest-executed code may not have corresponded to the patched ARM64 instruction under the emulator. Path-only request counts cannot distinguish these. Do **not** call this evidence of an automatic VIP bypass or official PlayPark authentication.
 
 **Immediate safe action:** preserve the prior reports, optionally record only the running process's `libil2cpp.so` mapping/architecture (no raw network logs), then run the **existing exact-hash guarded Phase40BP restore script** on 62033. Do not repeat the test or patch additional native instructions until the execution path is attributed. Rollback 62030, production, and main branch remain untouched.
+
+## Recovery: original Phase40BP verified restored (user report, 2026-10-26)
+
+The user ran the existing exact-hash guarded `restore_phase40bp_62033.ps1` on disposable `127.0.0.1:62033`. It reported:
+
+```text
+[RESTORE] Check ONLY disposable 62033
+[RESTORE] Read installed package path on 62033
+[RESTORE] Read-only pull current installed Phase40BU APK
+[RESTORE] Restore original verified Phase40BP to ONLY disposable 62033
+[RESTORE] Read installed package path on 62033
+[RESTORE] Read-only verify restored original APK
+PHASE40BP_ORIGINAL_SIGNED_APK_RESTORED_ON_62033_VERIFIED
+```
+
+**Recovery status: PASS** for installed APK identity against the original known-good Phase40BP signed artifact hash `1941AB5D7E2D00C16B71C6B6139AE8869CF3CEEF0424245E18C6F8B319BD14E4`, as checked by the restore script. No new original login test was requested. Original rollback device 62030 untouched. The earlier test remains **failed expectation** rather than a native-execution proof.
+
+**Follow-up offline source inspection:** The Phase40BU patcher verifies the original ELF SHA-256 and exactly one AArch64 instruction at RVA `0x6A8868`; the signed-APK verifier compares all unmodified ZIP payloads and the single patched ELF byte range. The runtime probe's `/session.php` handler counts requests without recording packet/query contents, original native caller, loaded library architecture, or correlation to a specific click. It does not attest the live guest code or perform sender call-site instrumentation. Thus artifact parity plus one endpoint request **does not identify the execution mechanism**. The `run_phase40bu_local_deny_probe.py` return code also does not fail on nonzero session count when routing cleanup succeeds; the printed failure marker correctly captures the observed result.
+
+**Next technical discriminator (future, not run):** If this native direction is revisited, establish a privacy-safe execution witness for the exact normal `Login()` method and the concrete loaded ELF/ABI on the disposable runtime before another conditional detour. Do not infer NativeBridge translator behavior from ZIP parity or from a path-only probe. Until then, continue from the restored, runtime-proven Phase40BP CGM ACTIVE UI membership checkpoint, and do not patch the working app again based on this test alone.
