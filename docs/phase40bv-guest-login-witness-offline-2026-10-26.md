@@ -40,3 +40,24 @@ Build/install from known-good Phase40BP **only if currently exact installed** on
 This method-pointer memory observation can show guest bytes **but not that the method was executed**. It is a prerequisite for a later execution-correlation test; one `/session.php` request alone remains insufficient.
 
 **Boundaries:** no production or default-branch changes, no official traffic, no backend mutation, no host-side Frida attach, no APK install in this checkpoint, no device `62030` access. Legacy Facebook login is unsupported; current focus is ordinary PlayPark CONFIRM. Independent authentic game-session upstream remains unresolved.
+
+## LIVE RUNTIME UPDATE — user report, 2026-10-26 (UTC+08)
+
+The user installed/launched the Phase40BV diagnostic APK and provided the following narrow `CGMPhase40BV` logcat events from **two distinct app processes**:
+
+```text
+10-26 01:18:35.414 PID=4922 CGMPhase40BV: LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES
+10-26 01:19:05.249 PID=4922 CGMPhase40BV: LOGIN_PROGRESS_CLEAR
+10-26 01:20:02.451 PID=5139 CGMPhase40BV: LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES
+10-26 01:20:31.176 PID=5139 CGMPhase40BV: LOGIN_PROGRESS_CLEAR
+```
+
+**Runtime verdict — PARTIAL PASS / code-pointer evidence:** Twice, actual `LoginServerManager.Login()` IL2CPP MethodInfo's `methodPointer` was located in the expected `libil2cpp.so` mapping at original RVA `0x6A86E8`. The call-site bytes at `0x6A8868` matched the installed Phase40BV deny branch. The marker emitted by the code-witness distinguishes the canonical module mapping from alias/mismatch states. This substantially reduces (but does not mathematically eliminate) the hypothesis that the wrong/unpatched ELF was being sampled. The user restarted the app between observations: PID **4922** then **5139**; do not count these as two login attempts.
+
+**Progress flag interpretation:** The user explicitly reports `LOGIN_PROGRESS_CLEAR` appears when yellow LOGIN is shown, **before credential CONFIRM**. In the current Java source, `lastProgressWitness=-1`, so the first successful field read (0) emits `LOGIN_PROGRESS_CLEAR` even if the field has not changed. Thus it is a **baseline state observation**, not proof `Login()` executed, denied, or was reset by a callback. No `LOGIN_PROGRESS_SET` or `LOGIN_SESSION_COUNTER_ADVANCED_SAME_SESSION` appears in the four supplied lines; that limited excerpt does not prove neither event could occur in a future click.
+
+**Unresolved:** No CONFIRM click or local path-only request count accompanies this specific two-process witness. The prior Phase40BU single `/session.php` hit is a separate run. Method-pointer byte observation is not an execution trace: guest translation/caching, alternate caller routing or previously queued traffic are still unassigned. Do **not** declare sender denial successful.
+
+**Next meaningful and bounded test** (only while the verified Phase40BV experimental APK is installed): a single user-witnessed inner CONFIRM click using CGM ACTIVE email + fictional password through the existing isolated PHP8094 / TCP18992 + path-only one-shot localhost `/session.php` rejecting fixture. Record the `CGMPhase40BV` login-progress and session-counter transition labels alongside the fixture's `config/session/other` counts. If the click or enabled state is not witnessed, zero session hits is inconclusive. The old Phase40BU probe is path-only and does not verify installed APK hash or report failure in exit code; check markers and installed identity, not its return code. No raw URL, account, token, packets or password in logs. Restore Phase40BP with Phase40BV's exact-hash script afterward. **This proposed click test has not been run** as of this log.
+
+No official game login, independent upstream, Garden session, production release or rollback 62030 access is implied.
