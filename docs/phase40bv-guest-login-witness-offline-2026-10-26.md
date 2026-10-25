@@ -111,3 +111,34 @@ The latter is not from the completed 8095 one-shot probe. The probe restores 809
 **Next bounded action:** only if Phase40BV remains verified installed and synthetic PHP8094/TCP18992 are active, run the existing 62033-scoped BU path-only probe **one more time with a deliberate single CONFIRM click while `CGM_VIP_ORIGINAL_CONFIRM_ENABLED` is active and the 8095 probe says ARMED**. Use a fictional password and return only path counts, same-process witness markers and user-confirmed click. The 75-second default probe timer can be extended to 120 seconds by `--seconds 120` (bounded script limit). If no current-PID `LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES` marker, stop instead of assuming the old PID's witness applies. Afterward restore the exact working Phase40BP with the existing 40BV restore script; no rebuild, genuine credentials, official service test, raw URL logs or rollback 62030 access.
 
 **Status remains INCONCLUSIVE pending a witnessed click and contemporaneous labels.**
+
+## Repeated probe: one local session request; current-process native witness absent from excerpt
+
+**User-supplied runtime evidence** (Oct 26, local UTC+08, from disposable Nox 62033):
+
+```text
+PHASE40BU_SAFE_FIXTURE_ARMED_N0X62033
+PHASE40BU_CONFIG_REQUEST_SEEN
+PHASE40BU_SESSION_ENDPOINT_REQUEST_SEEN count=1
+PHASE40BU_DENY_ONLY_FAILED_SESSION_REQUEST_SEEN
+PHASE40BU_COUNTS config=1 session=1 other=0
+PHASE40BU_ORIGINAL_CONFIGURATION_ROUTE_RESTORED
+
+10-26 01:38:27.610 PID 5967 CGMPhase40BP: VIP_GATE_LIBRARY_LOADED
+10-26 01:39:28.487 PID 5967 CGMPhase40BP: CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:39:28.552 PID 5967 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 01:39:33.652 PID 5967 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+10-26 01:39:33.761 PID 5967 CGMPhase40BP: CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 01:39:33.827 PID 5967 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 01:39:35.068 PID 5967 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+```
+
+**Interpretation:** The path-only synthetic fixture saw exactly one session endpoint and intentionally rejected it; route restoration was reported. This **fails the deny-only zero-request expectation** but is not proof the patched branch executed. The user has **not explicitly confirmed a manual CONFIRM click in this message** and the probe lacks timestamps for the session hit.
+
+**New forensic clue from actual shipped BV Java:** every fresh process's first successful `sampleOnUnityLoop()` call executes `nativeLoginCodeWitness()` and, since `lastCodeWitness=-1`, emits a `CGMPhase40BV: LOGIN_METHOD_...` status before any `CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_ENABLED` marker (both happen in the same Unity-loop method; lines 187–219 in BV source). The posted **PID 5967 excerpt has no `CGMPhase40BV` markers**. That could mean that only the `CGMPhase40BP` log tag was collected/shared, that a BP/pre-BV build is running, or that the excerpt is incomplete. It should **not** be interpreted as a verified live BV deny instruction for PID 5967.
+
+Earlier BV method-pointer attestations were obtained from PIDs **4922 and 5139** and cannot be transferred automatically to PID 5967. The original `VIP_GATE_LIBRARY_LOADED` tag exists in BP *and* BV and cannot identify the installed build.
+
+**Next step (no repeat login):** query retained **`CGMPhase40BV` logcat for PID 5967** and verify the *currently installed* APK's SHA-256 against Phase40BP `1941AB5D7E2D00C16B71C6B6139AE8869CF3CEEF0424245E18C6F8B319BD14E4` and the local known Phase40BV signed artifact. Read-only ADB `pm path` and `pull` only to 62033; preserve unique local inspection file names. If the application has been replaced since that run, present hash only proves current state, not historical state. **Do not run another CONFIRM test, patch or unguarded restore until build identity is resolved.**
+
+No official game authentication, successful server state or new independent upstream is demonstrated.
