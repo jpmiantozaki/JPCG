@@ -186,3 +186,43 @@ This exact SHA-256 is the known-good Phase40BP signed APK, **not** the Phase40BV
 **Next discriminator (one controlled test; not yet run in this evidence):** while the exact BV diagnostic is still installed, run the existing path-only `run_phase40bu_local_deny_probe.py` on the disposable 62033 with PHP8094 and TCP18992 synthetic fixtures. Only after the probe prints `PHASE40BU_SAFE_FIXTURE_ARMED_N0X62033`, use a legitimately owned CGM ACTIVE email, an entirely **fictional** password, and manually press original CONFIRM **exactly once while enabled**. Preserve the probe's `config/session/other` counts and current-PID `CGMPhase40BV` progress/counter witness markers; do not share raw URLs or credentials. A witnessed click with `session=0` supports denial; `session=1` would be an unexpected live request requiring branch/source attribution; neither implies PlayPark authentication. Always restore exact Phase40BP using BV's guarded restore when complete, and do not touch Nox 62030.
 
 **No installation, new APK, sender guard, official login, game/Garden session or backend deployment is claimed by this documentation update.**
+
+## Phase40BV completed controlled one-click denial test — runtime PASS (2026-10-26)
+
+**Test scope:** Disposable Nox `127.0.0.1:62033`, original CGM APK with Phase40BV diagnostic **unconditional deny-only** ARM64 guest branch; locally isolated synthetic config and `/session.php` path-only responder; **CGM ACTIVE email and fictional password**. No genuine PlayPark authentication or session was attempted.
+
+**Same-process filtered logcat from PID 3961:**
+
+```text
+10-26 02:01:35.415 PID 3961 CGMPhase40BV: LOGIN_METHOD_DENY_BRANCH_GUEST_BYTES
+10-26 02:02:05.364 PID 3961 CGMPhase40BV: LOGIN_PROGRESS_CLEAR
+10-26 02:02:10.490 PID 3961 CGMPhase40BP: CGM_VIP_ACTIVE_FOR_CURRENT_INPUT
+10-26 02:02:10.496 PID 3961 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_ENABLED
+10-26 02:02:15.588 PID 3961 CGMPhase40BP: CGM_VIP_ORIGINAL_CONFIRM_DISABLED
+```
+
+**One-shot probe reported:**
+
+```text
+PHASE40BU_SAFE_FIXTURE_ARMED_N0X62033
+PHASE40BU_CONFIG_REQUEST_SEEN
+PHASE40BU_ZERO_SESSION_REQUESTS_IN_OBSERVATION_WINDOW
+REQUIRES_USER_REPORT_CONFIRM_CLICKED_WHILE_ENABLED
+PHASE40BU_COUNTS config=1 session=0 other=0
+PHASE40BU_ORIGINAL_CONFIGURATION_ROUTE_RESTORED
+```
+
+**Critical manual confirmation:** User answered **YES** to “During this exact test (PID 3961), did you press the orange CONFIRM button once while it was enabled and the probe was still running?” This completes the probe's required user-witnessed click condition. The synthetic handler saw no `/session.php` request during its bounded observation window.
+
+**Verdict: Phase40BV deny-only runtime BEHAVIORAL PASS.** Combined evidence establishes: correctly loaded deny-branch bytes at original normal `Login()` method pointer in the *same* process, CGM ACTIVE gate approval and original button enabled, one manually confirmed original CONFIRM click while the fixture was armed, and `config=1,session=0,other=0`. Compared with an earlier Phase40BP controlled synthetic local request `config=1,session=1`, this supports the intended native deny behavior. Strict caveats: not a CPU-level branch execution trace, does not disprove other submission paths, does not demonstrate conditional authorization or any official server acceptance; approval may expire after 5 seconds and click timing is user-reported.
+
+**Restoration verified by original exact-hash guarded script:**
+
+```text
+[RESTORE] Read-only verify restored original APK
+PHASE40BP_ORIGINAL_SIGNED_APK_RESTORED_ON_62033_VERIFIED
+```
+
+The script's restored target is the previously verified **Phase40BP** APK SHA-256 `1941AB5D7E2D00C16B71C6B6139AE8869CF3CEEF0424245E18C6F8B319BD14E4`. Do not treat BV as currently installed; rollback Nox62030 untouched. No need to repeat this unconditional test.
+
+**Next engineering objective (planned, not yet implemented):** replace unconditional denied-only callsite test with a strict CGM eligibility lease / matching-identity + generation / consume-once decision at the original `Login()` send boundary. Verify **both** outcomes on local synthetic fixtures: denied never submits or advances login progress, CGM ACTIVE allows **exactly one** unmodified original `SendLogin()` transition with a fictional password, without claiming valid PlayPark login or Garden access. Avoid modifying official login packets or confusing membership with authentication. Keep all work in staging and restore exact Phase40BP after any disposable tests.
