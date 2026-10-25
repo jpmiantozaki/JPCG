@@ -50,6 +50,20 @@ PHASE40BR_SENDER_CONTRACT_OFFLINE_PASS assertions=39
 This **does not** demonstrate a native hook or live sender authorization. The source package `CGM_Phase40BR_Original_SendLogin_Boundary_Offline.zip` was created locally for review. ZIP SHA-256:
 `9660071e89f919b2ac31988f7e0e38d1816df468bc3da8f103456dd7af1d5d4d`.
 
+## Scope correction from the user (2026-10-25)
+
+The original `<WebViewOnPageFinished>b__30_0` call site still exists in the original ARM64 executable, but **the user confirms Facebook login is deprecated/unsupported** in the currently used client; accounts use **ordinary PlayPark login**. Preserve the static finding without treating that dormant branch as a currently reachable feature or requiring a separate Facebook-login experiment.
+
+**Current supported/tested route:** the original inner CONFIRM -> `LoginServerManager.Login()` -> `SendLogin()` with `fbLogin=0`. An unsupported legacy branch should remain fail-closed, not be enabled or used as a substitute for PlayPark authentication.
+
+## Immediate one-shot runtime checkpoint — Phase 40BS (planned, not yet run)
+
+Before attempting an unverified native detour, confirm that Phase 40BP's proven CGM ACTIVE UI decision can still pass through the **unchanged ordinary CONFIRM submit path**. The `CGM_Phase40BS_OneShot_PlayPark_Submission_Test.zip` local helper (host-only Python, no APK rebuild) temporarily points **Nox 62033** `tcp:8091` to a **localhost-only path-counter** on port 8095 and transparently serves the already existing synthetic configuration from localhost PHP 8094. After exactly one **`/session.php` endpoint hit**, it deliberately returns HTTP 503, emits no credentials/query/token values, and restores the previous reverse mapping.
+
+Safety boundaries: use your own CGM ACTIVE email and a **fictional password**, never a real password; keep original synthetic TCP listener on 18992; never send a local test packet to an official/third-party service; do not infer PlayPark authentication or sender-level guard coverage from endpoint reachability. This test checks that the normal route is intact **after UI membership admission**, which is a different question from the earlier pre-Phase40BP local endpoint reachability check.
+
+**Status:** the helper's Python syntax and four offline unit tests passed; not run on Nox/Windows. A live `PHASE40BS_SESSION_ENDPOINT_REQUEST_SEEN count=1` after a fresh `CGM_VIP_ACTIVE_FOR_CURRENT_INPUT` and `CGM_VIP_ORIGINAL_CONFIRM_ENABLED` would support the intended normal UI-to-local-session path, **not** a PlayPark/game login or native sender guard.
+
 ## Required next implementation (not yet delivered)
 
 - Bind the validated CGM membership response and input-generation to the **actual** username used at native submission.
