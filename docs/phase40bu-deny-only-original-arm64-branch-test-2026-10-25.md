@@ -74,3 +74,19 @@ PHASE40BU_ORIGINAL_CONFIGURATION_ROUTE_RESTORED
 **Second harness bug:** `main()` prints `PHASE40BU_DENY_ONLY_FAILED_SESSION_REQUEST_SEEN`, but its final return expression is `2 if cleanup_failed else 0`. Therefore a failed deny expectation can return **process exit code 0** if cleanup succeeds. An exit code of 0 does **not** mean the deny test passed. Future probes must fail when unexpected session requests are observed.
 
 **Next actions:** preserve the fixture output and native code, perform the read-only installed-APK hash check; if exact Phase40BU is installed, use the already supplied exact-hash restore script to return to Phase40BP on `62033` without another login attempt. If Phase40BP is still installed, do not run the Phase40BU restore script. If installed hash is unexpected, stop instead of overwriting any build. Further native runtime diagnosis depends on this identity result. No actual official PlayPark auth, Garden session, production deployment, or rollback Nox activity is implied.
+
+## Follow-up installed-build identity result (user, 2026-10-26 00:52 UTC+08)
+
+The user completed the read-only installed APK SHA comparison on disposable `127.0.0.1:62033`, obtaining:
+
+```text
+RESULT: PHASE40BU_CURRENTLY_INSTALLED
+```
+
+This means the **currently installed APK** matches the exact locally built `Phase40BU_SIGNED_TEST_ONLY.apk`, not the prior exact Phase40BP SHA. The archived Phase40BU build verifies that only `lib/arm64-v8a/libil2cpp.so` differs in payload, and within that file the intended 4-byte call-site instruction is changed. This check establishes **installed artifact identity, not observed execution of that instruction**.
+
+The prior path-only probe already observed `config=1 session=1 other=0`; therefore Phase40BU remains a **failed deny-only experiment**. It is no longer reasonable to assume Phase40BP is *currently* installed. A timestamp of exactly when the BU install occurred was not included in this follow-up; comparison now alone cannot prove which build was installed at the instant the earlier probe recorded the request, although no intervening install has been reported.
+
+**Remaining hypotheses, unverified:** app execution may not have reached patched `Login()` callsite; the HTTP request may have originated via another native send route or a previously queued request; or the guest-executed code may not have corresponded to the patched ARM64 instruction under the emulator. Path-only request counts cannot distinguish these. Do **not** call this evidence of an automatic VIP bypass or official PlayPark authentication.
+
+**Immediate safe action:** preserve the prior reports, optionally record only the running process's `libil2cpp.so` mapping/architecture (no raw network logs), then run the **existing exact-hash guarded Phase40BP restore script** on 62033. Do not repeat the test or patch additional native instructions until the execution path is attributed. Rollback 62030, production, and main branch remain untouched.
