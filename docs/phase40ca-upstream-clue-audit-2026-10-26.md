@@ -111,3 +111,6 @@ Targeted public searches on 2026-10-26 for combinations of `ANLGarden`, `MGRelay
 ### Safety and change boundary
 
 All investigations were read-only, local and static/archived. No sensitive packets, credentials, relay session strings or live provider requests were published. No Render/Cloudflare environment, official server, GitHub production branch, original APK, experimental Nox62033 or rollback Nox62030 was modified. This report is an evidence checkpoint, **not** a working independent upstream implementation or official Game/Garden login proof.
+## Phase 40CB erratum (2026-10-26)
+
+**Correction:** the old `vip_expiry_present` diagnostic is `is_int($expiry)`, **not a JSON key-presence test**. Three Stage0 rows with `false` do not prove the upstream field was missing. Seventeen Stage1 rows with `true` mean PHP decoded an integer, and their `vip_expiry_positive=false` means nonpositive. Likewise all twenty `servertype=null` rows mean PHP did not decode an in-range integer, and conventional numeric JSON `0`/`1` was *not* logged. The actual JSON type remains unknown. See [Phase 40CB](phase40cb-original-upstream-response-type-contract-2026-10-26.md) for exact native Unity deserializer and type-only tests.
