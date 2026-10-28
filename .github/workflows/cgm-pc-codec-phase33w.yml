@@ -1,0 +1,23 @@
+name: CGM Phase33W PC Packet Codec — Staging Only
+on:
+  push:
+    branches:
+      - feat/phase33w-pc-codec-capture-validated
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  php-codec-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Syntax check isolated upstream codec
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/CgmPcPacketCodec.php
+          php -l staging/cgm-upstream-foundation-v1/tests/pc_packet_codec_test.php
+      - name: Test synthetic codec and independent vectors
+        run: php staging/cgm-upstream-foundation-v1/tests/pc_packet_codec_test.php
