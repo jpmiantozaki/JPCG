@@ -1,0 +1,45 @@
+name: CGM Phase 3.0 Owned Upstream — Isolated Staging
+on:
+  push:
+    branches:
+      - feat/phase30-owned-upstream-admission
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  upstream-policy-and-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cgm_upstream_ci
+          POSTGRES_USER: cgm_ci
+          POSTGRES_PASSWORD: synthetic_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cgm_ci -d cgm_upstream_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CGM_TEST_PG_DSN: 'pgsql:host=127.0.0.1;port=5432;dbname=cgm_upstream_ci'
+      CGM_TEST_PG_USER: cgm_ci
+      CGM_TEST_PG_PASS: synthetic_ci_password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql
+          coverage: none
+      - name: Syntax check staged PHP
+        run: |
+          for f in staging/cgm-upstream-foundation-v1/src/{ProviderHandoffGate,PgAtomicAttemptStore,ExactCgmMembershipRepository,AdmissionApi}.php staging/cgm-upstream-foundation-v1/public/{admission,health,session}.php staging/cgm-upstream-foundation-v1/tests/postgres.php; do
+            php -l "$f"
+          done
+      - name: Verify one-use PostgreSQL admission attempts
+        run: php staging/cgm-upstream-foundation-v1/tests/postgres.php
+      - name: Verify public staging route fails closed
+        run: python3 staging/cgm-upstream-foundation-v1/tests/http_smoke.py
