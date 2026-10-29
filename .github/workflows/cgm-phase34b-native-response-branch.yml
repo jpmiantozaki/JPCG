@@ -1,0 +1,23 @@
+name: CGM Phase34B PC Native Login/Game Handler Audit (Offline)
+on:
+  push:
+    branches:
+      - feat/phase34b-native-login-game-response
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-pc-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile source and test syntax
+        run: |
+          python -m py_compile staging/cgm-upstream-foundation-v1/research/phase34a_pc_stream_metadata.py
+          python -m py_compile staging/cgm-upstream-foundation-v1/research/phase34b_server_branch_audit.py
+          python -m py_compile staging/cgm-upstream-foundation-v1/research/phase34b_native_pe_invariant.py
+      - name: Run synthetic zero-result and privacy regressions
+        run: python -m unittest discover -s staging/cgm-upstream-foundation-v1/tests -p 'phase34b_server_branch_test.py' -v
