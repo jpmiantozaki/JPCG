@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/../src/ProviderHandoffGate.php';
+$providerFile = __DIR__ . '/../src/ProviderHandoffGate.php';
+if (!is_file($providerFile)) $providerFile = __DIR__ . '/../references/ProviderHandoffGate.php';
+require_once $providerFile;
 require_once __DIR__ . '/../src/GenerationBoundRelayLedger.php';
 use CGM\Phase40CD\ProviderHandoffGate;
 use CGM\Phase40CD\UnconfiguredProviderVerifier;
