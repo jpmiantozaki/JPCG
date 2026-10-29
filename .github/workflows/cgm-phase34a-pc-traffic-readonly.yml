@@ -1,0 +1,20 @@
+name: CGM Phase34A PC Packet Boundary Audit (Synthetic Only)
+on:
+  push:
+    branches:
+      - feat/phase34a-pc-accepted-traffic-boundaries
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pc-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read-only metadata audit syntax
+        run: python -m py_compile staging/cgm-upstream-foundation-v1/research/phase34a_pc_stream_metadata.py
+      - name: Synthetic TCP boundary, codec, privacy regression
+        run: python -m unittest discover -s staging/cgm-upstream-foundation-v1/tests -p 'phase34a_pc_stream_metadata_test.py' -v
