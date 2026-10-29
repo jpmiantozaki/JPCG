@@ -7,6 +7,7 @@ downloadable Phase34C source ZIP; no original binaries/captures on GitHub.
 """
 from __future__ import annotations
 import json
+import math
 from pathlib import Path
 
 STEPS = (
@@ -64,6 +65,7 @@ def classify(data:object)->dict:
         return base
     values=[times[k] for k in STEPS]
     if (any(type(v) not in (int,float) or v<0 or v>172800 for v in values)
+        or any(not math.isfinite(float(v)) for v in values)
         or values[0]!=0
         or any(b<=a for a,b in zip(values,values[1:]))):
         return base
