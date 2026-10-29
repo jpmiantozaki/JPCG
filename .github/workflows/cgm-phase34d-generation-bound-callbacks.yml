@@ -1,0 +1,26 @@
+name: CGM Phase34D Socket-Generation Callback Correlation (Offline)
+on:
+  push:
+    branches:
+      - feat/phase34d-generation-bound-relay-callbacks
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  relay-callbacks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Verify source and synthetic tests
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/GenerationBoundRelayLedger.php
+          php -l staging/cgm-upstream-foundation-v1/tests/phase34d_generation_ci.php
+          php -l staging/cgm-upstream-foundation-v1/tests/phase34d_provider_boundary_ci.php
+      - name: Assert callback attempt, Stage 0/1, socket epoch and concurrency
+        run: php staging/cgm-upstream-foundation-v1/tests/phase34d_generation_ci.php
+      - name: Assert unconfigured official provider still denies after local callback match
+        run: php staging/cgm-upstream-foundation-v1/tests/phase34d_provider_boundary_ci.php
