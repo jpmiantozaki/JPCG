@@ -1,0 +1,20 @@
+name: CGM Phase34C Archived Android/Nox Baseline (Sanitized Only)
+on:
+  push:
+    branches:
+      - feat/phase34c-android-recorded-session-baseline
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recorded-archive-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check sanitized baseline contract syntax
+        run: python -m py_compile staging/cgm-upstream-foundation-v1/research/phase34c_baseline_contract.py
+      - name: Verify archived Android and PC metadata without claiming new sessions
+        run: python -m unittest discover -s staging/cgm-upstream-foundation-v1/tests -p 'phase34c_baseline_contract_test.py' -v
