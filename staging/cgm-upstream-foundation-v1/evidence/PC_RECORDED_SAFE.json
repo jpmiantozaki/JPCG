@@ -1,0 +1,32 @@
+{
+  "archive_provenance": "ORIGINAL_PC_ARCHIVE_LABEL_FROM_PHASE424",
+  "historical_recording": true,
+  "frames": {
+    "18805_C2S": 1,
+    "18805_S2C": 1,
+    "18806_C2S": 67,
+    "18806_S2C": 150,
+    "20840_C2S": 16,
+    "20840_S2C": 20
+  },
+  "total_frames": 255,
+  "single_client_network_address": true,
+  "single_tcp_connection_per_service": true,
+  "checkpoint_relative_seconds": {
+    "LOGIN_SUBMISSION": 0,
+    "LOGIN_ZERO_RESULT": 0.0857,
+    "VERIFY_CCU_REQUEST": 0.1531,
+    "GAME_LOGON_REQUEST": 0.2528,
+    "GAME_ZERO_RESULT": 0.4155,
+    "GARDEN_REQUEST": 52.2249,
+    "GARDEN_LOGIN_ZERO_RESULT": 52.2744,
+    "GARDEN_LOAD_ZERO_RESULT": 53.8648
+  },
+  "tcp_sequence_gaps": 0,
+  "unconsumed_stream_bytes": 0,
+  "stale_one_byte_overlap_candidates": 5,
+  "apk_process_identity_proven": false,
+  "official_provider_account_bound": false,
+  "new_cgm_mobile_session_issued": false,
+  "cgmonly_vip_accepted": false
+}
