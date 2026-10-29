@@ -1,0 +1,32 @@
+{
+  "archive_provenance": "ORIGINAL_ANDROID_NOX_ARCHIVE_LABEL_FROM_PHASE424",
+  "historical_recording": true,
+  "frames": {
+    "18805_C2S": 1,
+    "18805_S2C": 1,
+    "18806_C2S": 6,
+    "18806_S2C": 19,
+    "20840_C2S": 10,
+    "20840_S2C": 15
+  },
+  "total_frames": 52,
+  "single_client_network_address": true,
+  "single_tcp_connection_per_service": true,
+  "checkpoint_relative_seconds": {
+    "LOGIN_SUBMISSION": 0,
+    "LOGIN_ZERO_RESULT": 0.0975,
+    "VERIFY_CCU_REQUEST": 0.2808,
+    "GAME_LOGON_REQUEST": 0.4306,
+    "GAME_ZERO_RESULT": 0.5613,
+    "GARDEN_REQUEST": 8.0384,
+    "GARDEN_LOGIN_ZERO_RESULT": 8.0866,
+    "GARDEN_LOAD_ZERO_RESULT": 8.3426
+  },
+  "tcp_sequence_gaps": 0,
+  "unconsumed_stream_bytes": 0,
+  "stale_one_byte_overlap_candidates": 0,
+  "apk_process_identity_proven": false,
+  "official_provider_account_bound": false,
+  "new_cgm_mobile_session_issued": false,
+  "cgmonly_vip_accepted": false
+}
