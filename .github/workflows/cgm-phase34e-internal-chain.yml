@@ -1,0 +1,32 @@
+name: CGM Phase34E Original Mobile Chain Readiness (Offline)
+on:
+  push:
+    branches:
+      - feat/phase34e-authfirst-chain-readiness
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-chain-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Verify the exact code patch integrity
+        run: |
+          echo '8b2d3cdc49c54cd944acc36ada8a86b5ee09078d247245a56d69cde930066bd2  staging/cgm-upstream-foundation-v1/source-patches/CGM_Phase34E_Core_CI_Staging.zip' | sha256sum -c -
+      - name: Extract coordinator into inherited staging-only source tree
+        run: unzip -o staging/cgm-upstream-foundation-v1/source-patches/CGM_Phase34E_Core_CI_Staging.zip -d staging/cgm-upstream-foundation-v1
+      - name: Verify PHP source syntax
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/OriginalMobileChainCoordinator.php
+          php -l staging/cgm-upstream-foundation-v1/tests/phase34e_ci.php
+      - name: Check 323 synthetic chain assertions
+        run: php staging/cgm-upstream-foundation-v1/tests/phase34e_ci.php
+      - name: Regression - generation-bound callbacks and fail-closed provider
+        run: |
+          php staging/cgm-upstream-foundation-v1/tests/phase34d_generation_ci.php
+          php staging/cgm-upstream-foundation-v1/tests/phase34d_provider_boundary_ci.php
