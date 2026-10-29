@@ -1,0 +1,25 @@
+name: CGM Phase33Z3 Archived Garden Mapping Regression
+on:
+  push:
+    branches:
+      - feat/phase33z3-archived-garden-mappings
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive-garden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: PHP syntax check
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/CgmC8Subtype02Structure.php
+          php -l staging/cgm-upstream-foundation-v1/src/CgmC8Subtype02RecordLayout.php
+          php -l staging/cgm-upstream-foundation-v1/tests/c8_record_layout_test.php
+          php -l staging/cgm-upstream-foundation-v1/tests/c8_archive_semantics_test.php
+      - name: Regress original records and archived semantic mapping
+        run: php staging/cgm-upstream-foundation-v1/tests/c8_archive_semantics_test.php
