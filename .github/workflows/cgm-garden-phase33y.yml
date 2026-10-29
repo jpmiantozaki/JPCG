@@ -1,0 +1,23 @@
+name: CGM Phase33Y Garden Full-Body Decoder (Staging)
+on:
+  push:
+    branches:
+      - feat/phase33y-garden-full-decode-c8-handler
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  corrected-garden-parser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Syntax check corrected PHP codec and tests
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/CgmGardenModeBPacket.php
+          php -l staging/cgm-upstream-foundation-v1/tests/garden_modeb_packet_test.php
+      - name: Verify original constant-key rule with 26,944 synthetic assertions
+        run: php staging/cgm-upstream-foundation-v1/tests/garden_modeb_packet_test.php
