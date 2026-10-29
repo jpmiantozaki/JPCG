@@ -1,0 +1,30 @@
+name: CGM Phase34F Signed Provider Verification (Offline)
+on:
+  push:
+    branches:
+      - feat/phase34f-signed-provider-attestation
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-signed-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium
+          coverage: none
+      - name: Reconstruct exact locally tested source and verify SHA256
+        run: |
+          base64 --decode staging/cgm-upstream-foundation-v1/source-patches/CGM_Phase34F_Runtime_Source.tar.xz.b64 > /tmp/phase34f.tar.xz
+          echo '1721bb79b611adf03f13c71263d4330dddd608d7f7645ca46d0df9a09e128176  /tmp/phase34f.tar.xz' | sha256sum -c -
+          tar -xJf /tmp/phase34f.tar.xz -C staging/cgm-upstream-foundation-v1
+      - name: Verify syntax and core dependency
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/Ed25519ProviderVerifier.php
+          php -l staging/cgm-upstream-foundation-v1/src/PinnedProviderVerifierFactory.php
+          php -l staging/cgm-upstream-foundation-v1/tests/phase34f_signed_provider_ci.php
+      - name: Test real cryptographic verification with synthetic operator keys
+        run: php staging/cgm-upstream-foundation-v1/tests/phase34f_signed_provider_ci.php
