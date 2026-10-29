@@ -1,0 +1,36 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../src/GenerationBoundRelayLedger.php';
+use CGM\Phase34D\GenerationBoundRelayLedger;
+$n=0;
+function ok(bool $yes,string $what):void{global $n;if(!$yes)throw new RuntimeException($what);$n++;}
+$l=new GenerationBoundRelayLedger();$t=10000;
+$a=$l->begin($t);$b=$l->begin($t);
+ok(is_string($a)&&$a!==$b,'unique attempt');
+ok($l->enqueue($a,0,'LOGIN',$t)===null,'requires open socket');
+ok($l->openSocket($a,'LOGIN',$t)===1,'login epoch');
+ok($l->openSocket($a,'GAME',$t)===1,'game epoch');
+ok($l->enqueue($a,0,'GAME',$t)===null,'stage0 route');
+ok($l->enqueue($a,1,'LOGIN',$t)===null,'stage1 route');
+$r=$l->enqueue($a,0,'LOGIN',$t);$id=$r['request_id'];
+ok($l->deliver($id,$b,0,'LOGIN',1,$t)['classification']==='ATTEMPT_MISMATCH','attempt bound');
+ok($l->deliver($id,$a,1,'LOGIN',1,$t)['classification']==='STAGE_MISMATCH','stage bound');
+ok($l->deliver($id,$a,0,'GAME',1,$t)['classification']==='SERVICE_MISMATCH','service bound');
+ok($l->deliver($id,$a,0,'LOGIN',2,$t)['classification']==='SOCKET_GENERATION_MISMATCH','epoch bound');
+$good=$l->deliver($id,$a,0,'LOGIN',1,$t);
+ok($good['local_callback_correlated']===true,'local correlation');
+ok($good['official_game_authenticated']===false,'no game auth');
+ok($good['authorized_garden_session']===false,'no garden auth');
+ok($l->deliver($id,$a,0,'LOGIN',1,$t)['classification']==='NOT_PENDING','single-use');
+$x=$l->enqueue($a,1,'GAME',$t);$y=$l->enqueue($a,1,'GAME',$t);
+ok($l->pendingCount($a)===2,'overlap');
+ok($l->deliver($y['request_id'],$a,1,'GAME',1,$t)['local_callback_correlated'],'second first');
+ok($l->deliver($x['request_id'],$a,1,'GAME',1,$t)['local_callback_correlated'],'first second');
+$stale=$l->enqueue($a,1,'GAME',$t);
+ok($l->openSocket($a,'GAME',$t)===2,'reconnect increments');
+ok($l->deliver($stale['request_id'],$a,1,'GAME',1,$t)['classification']==='NOT_PENDING','stale ignored');
+ok($l->closeSocket($a,'GAME'),'close');
+ok($l->openSocket($a,'GAME',$t)===3,'no epoch reuse');
+$c=$l->enqueue($a,1,'GAME',$t);$l->cancel($a);
+ok($l->deliver($c['request_id'],$a,1,'GAME',3,$t)['classification']==='NOT_PENDING','cancel clears');
+echo "PHASE34D_GENERATION_CI_PASS assertions=$n SYNTHETIC_ONLY\n";
