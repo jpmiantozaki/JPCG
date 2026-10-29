@@ -1,0 +1,23 @@
+name: CGM Phase33X Garden Transport Parser (Synthetic Only)
+on:
+  push:
+    branches:
+      - feat/phase33x-garden-transport-codec
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  garden-parser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Check PHP syntax
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/CgmGardenModeBPacket.php
+          php -l staging/cgm-upstream-foundation-v1/tests/garden_modeb_packet_test.php
+      - name: Verify 1402 synthetic Garden transport assertions
+        run: php staging/cgm-upstream-foundation-v1/tests/garden_modeb_packet_test.php
