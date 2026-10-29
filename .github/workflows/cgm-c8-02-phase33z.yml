@@ -1,0 +1,23 @@
+name: CGM Phase33Z C8/02 Structure (Staging Only)
+on:
+  push:
+    branches:
+      - feat/phase33z-c8-02-structure-checkpoint
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  c8-02-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: PHP syntax checks
+        run: |
+          php -l staging/cgm-upstream-foundation-v1/src/CgmC8Subtype02Structure.php
+          php -l staging/cgm-upstream-foundation-v1/tests/c8_subtype02_structure_test.php
+      - name: 63 synthetic C8/02 bounds and record layout tests
+        run: php staging/cgm-upstream-foundation-v1/tests/c8_subtype02_structure_test.php
