@@ -9,9 +9,12 @@ use CGM\Phase33Z\CgmC8Subtype02Structure;
  * Read-only typed field decoder for original Windows Audition Garden C8/02,
  * sourced from 0x00A6AAE9 and checked against TWO original PCAP responses.
  *
- * These are transport-native field types and offsets, NOT official plant/item
- * semantic labels. This code does NOT authenticate, issue sessions, connect to
- * game services or overwrite any executable/client.
+ * Reconciled with earlier independently audited CGM Garden Manager Phase 4.7,
+ * 4.9, 4.24 and 4.25 findings. Labels correspond to PC parser reads, mobile
+ * IL2CPP model declarations and archived resource names, with uncertainty
+ * explicitly retained for candidates. Source fields can be historical snapshots;
+ * no authenticated game or Garden session is created by this parser.
+ * This code NEVER connects to game servers or modifies an executable.
  */
 final class CgmC8Subtype02RecordLayout
 {
@@ -32,17 +35,22 @@ final class CgmC8Subtype02RecordLayout
     }
     /**
      * Returns typed numeric packet records IN MEMORY. Values are not logged.
-     * No field except byte indices/selectors/coordinate candidates is assigned
-     * an inventory-specific meaning without live-state confirmation.
+     * Existing archived PC+APK captures confirmed seed/accessory/management
+     * item IDs and counts. The returned data remains LOCAL READ-ONLY state,
+     * not current authenticated account information.
      */
     public static function decode(string $packet): array {
         $m=CgmC8Subtype02Structure::inspect($packet);
+        // Phase 4.7/4.25: three original catalog inventory lists, each
+        // exactly [u32 item_id][u32 quantity]; NOT harvest-drop lists.
         $pairs=[];
         foreach($m['unknown_pair_arrays'] as $arr) {
             $pairs[]=self::rows($packet,$arr['first_offset'],$arr['count'],8,
                 static fn(string $p,int $i):array=>[
-                    'field0_u32'=>self::u32($p,$i),
-                    'field4_u32'=>self::u32($p,$i+4),
+                    'item_id'=>self::u32($p,$i),
+                    'quantity'=>self::u32($p,$i+4),
+                    'field0_u32'=>self::u32($p,$i), // retained old alias
+                    'field4_u32'=>self::u32($p,$i+4), // retained old alias
                 ]);
         }
         $groups=[];
@@ -59,16 +67,29 @@ final class CgmC8Subtype02RecordLayout
                     ]),
                 'records17'=>self::rows($packet,$records17['offset'],$records17['count'],17,
                     static fn(string $p,int $i):array=>[
-                        'record_index'=>self::u8($p,$i),             // +0, native object/map key
-                        'unknown_u32'=>self::u32($p,$i+1),          // +1..4
-                        'group_selector'=>self::u8($p,$i+5),        // +5, native <2 array selection
-                        'coordinate_candidate_x'=>self::u8($p,$i+6),
-                        'coordinate_candidate_y'=>self::u8($p,$i+7),
-                        'state8'=>[
+                        'record_index'=>self::u8($p,$i),
+                        'flower_instance_id'=>self::u8($p,$i),          // +0
+                        'unknown_u32'=>self::u32($p,$i+1),             // old alias
+                        'seed_catalog_id'=>self::u32($p,$i+1),        // +1..4
+                        'group_selector'=>self::u8($p,$i+5),          // old alias
+                        'garden_page'=>self::u8($p,$i+5),             // +5
+                        'coordinate_candidate_x'=>self::u8($p,$i+6), // old alias
+                        'coordinate_candidate_y'=>self::u8($p,$i+7), // old alias
+                        'x'=>self::u8($p,$i+6), 'y'=>self::u8($p,$i+7),
+                        'water_state'=>self::u8($p,$i+8),
+                        'clean_state'=>self::u8($p,$i+9),
+                        'fertilizer_state'=>self::u8($p,$i+10),
+                        'growth_level'=>self::u8($p,$i+11),
+                        'growth_points'=>self::u8($p,$i+12),
+                        'vitamin_state'=>self::u8($p,$i+13),
+                        'soil_state'=>self::u8($p,$i+14),
+                        'unmapped_movement_byte'=>self::u8($p,$i+15),
+                        'moving_state_candidate'=>self::u8($p,$i+16),
+                        'state8'=>[ // backwards-compatible old field
                             self::u8($p,$i+8),self::u8($p,$i+9),self::u8($p,$i+10),
                             self::u8($p,$i+11),self::u8($p,$i+12),
                         ],
-                        'unknown_tail_u32'=>self::u32($p,$i+13),    // +13..16
+                        'unknown_tail_u32'=>self::u32($p,$i+13), // legacy alias: DO NOT treat as a single semantic value
                     ]),
                 'records10'=>self::rows($packet,$records10['offset'],$records10['count'],10,
                     static fn(string $p,int $i):array=>[
@@ -87,17 +108,37 @@ final class CgmC8Subtype02RecordLayout
             static fn(string $p,int $i):array=>[
                 'record_index'=>self::u8($p,$i),               // +0
                 'array_selector_u32'=>self::u32($p,$i+1),      // +1..4, native selects one of 2 arrays
-                'unknown_a_u32'=>self::u32($p,$i+5),           // +5..8
-                'unknown_b_u32'=>self::u32($p,$i+9),           // +9..12
-                'class_u8'=>self::u8($p,$i+13),               // +13, native 0 / 1 / other tallies
-                'unknown_c_u32'=>self::u32($p,$i+14),          // +14..17
+                'unknown_a_u32'=>self::u32($p,$i+5),               // legacy alias
+                'unknown_b_u32'=>self::u32($p,$i+9),               // legacy alias
+                'position_axis_1_candidate'=>self::u32($p,$i+5), // +5..8, spatial hit-test
+                'position_axis_2_candidate'=>self::u32($p,$i+9), // +9..12
+                'class_u8'=>self::u8($p,$i+13),                  // legacy alias
+                'status_code'=>self::u8($p,$i+13),               // +13, meaning of codes unresolved
+                'unknown_c_u32'=>self::u32($p,$i+14),             // legacy alias
+                'auxiliary_value_unmapped'=>self::u32($p,$i+14),  // +14..17
             ]);
+        // Phase 4.9 verified native store order. The 8-bit tank and
+        // background ID are still qualified as candidates.
+        $gardenState=[
+            'garden_points'=>self::u32($packet,5),
+            'water_count'=>self::u32($packet,9),
+            'water_tank_candidate'=>self::u8($packet,13),
+            'fertilizer_count'=>self::u32($packet,14),
+            'vitamin_count'=>self::u32($packet,18),
+            'garden_background_id_candidate'=>self::u32($packet,22),
+        ];
         return [
             'packet_bytes'=>$m['packet_bytes'],
             'command'=>'C8','subcommand'=>'02','status'=>0,
             'pairs8'=>$pairs,'groups'=>$groups,'records18'=>$records18,
-            'semantics'=>'FIELD_LAYOUT_ONLY_NOT_INVENTORY',
+            'inventory'=>['seeds'=>$pairs[0],'accessories'=>$pairs[1],
+                'management'=>$pairs[2]],
+            'garden_state'=>$gardenState,
+            'mapping_provenance'=>'PHASE4_7_4_9_4_24_4_25_ARCHIVED_CROSSCHECK',
+            'semantics'=>'FIELD_LAYOUT_ONLY_NOT_INVENTORY', // deprecated compatibility value
             'authenticated_session_proven'=>false,
+            'harvest_drops_status'=>'NOT_DECODED',
+            'secret_garden_status'=>'NOT_SUPPLIED',
         ];
     }
     /**
@@ -109,6 +150,11 @@ final class CgmC8Subtype02RecordLayout
         $report=[
             'packet_bytes'=>$d['packet_bytes'],
             'pairs8_counts'=>array_map('count',$d['pairs8']),
+            'inventory_counts'=>[
+                'seeds'=>count($d['inventory']['seeds']),
+                'accessories'=>count($d['inventory']['accessories']),
+                'management'=>count($d['inventory']['management']),
+            ],
             'groups'=>[], 'record18_groups'=>[],
             'status'=>'STRUCTURE_ONLY', 'authenticated_session_proven'=>false,
         ];
