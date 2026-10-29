@@ -10,9 +10,9 @@ namespace CGM\Phase33X;
  * offline from their own verified EXE. Original proprietary tables are NOT
  * included in this source. This class never connects to any game server.
  *
- * The body transform can read beyond the initialized 256-byte table in the
- * original binary. This adapter returns a prefix-only result in that case;
- * callers MUST NOT treat the prefix as a complete authenticated packet.
+ * Native x86 0x009DE2C3 / 0x009DE1C4 prove a single selected table byte
+ * is reused for EVERY payload byte. This fully decodes large Garden packets.
+ * Transport decoding is NOT game authentication or Garden authorization.
  */
 final class CgmGardenModeBPacket
 {
@@ -37,7 +37,8 @@ final class CgmGardenModeBPacket
 
     /**
      * @return array{status:string,original_length:int,wire_length:int,
-     *               decoded_prefix:string,decoded_prefix_bytes:int,complete:bool}
+     *               decoded_prefix:string,decoded_prefix_bytes:int,
+     *               decoded_payload:string,payload_bytes:int,complete:bool}
      */
     public function decodeFrame(string $wire): array
     {
@@ -50,19 +51,22 @@ final class CgmGardenModeBPacket
         }
         $bodySelector = ord($wire[3]);
         $payloadLength = $originalLength - 2;
-        $available = max(0, 256 - $bodySelector);
-        $decodedCount = min($payloadLength, $available);
-        $decodedPrefix = '';
-        for ($i = 0; $i < $decodedCount; $i++) {
-            $decodedPrefix .= chr(ord($wire[4 + $i]) ^ ord($this->bodyTable[$bodySelector + $i]));
+        // One packet-scoped key byte: native PE32 disassembly confirms the
+        // lookup address is constant for the ENTIRE native body loop.
+        $key = ord($this->bodyTable[$bodySelector]);
+        $decodedPayload = '';
+        for ($i = 0; $i < $payloadLength; $i++) {
+            $decodedPayload .= chr(ord($wire[4 + $i]) ^ $key);
         }
-        $complete = $decodedCount === $payloadLength;
+        $complete = true;
         return [
-            'status' => $complete ? 'FULLY_DECODED' : 'PREFIX_ONLY_UNVERIFIED_LONG_BODY',
+            'status' => 'FULLY_DECODED',
             'original_length' => $originalLength,
             'wire_length' => strlen($wire),
-            'decoded_prefix' => $decodedPrefix,
-            'decoded_prefix_bytes' => $decodedCount,
+            'decoded_prefix' => $decodedPayload, // backward-compatible alias
+            'decoded_prefix_bytes' => $payloadLength,
+            'decoded_payload' => $decodedPayload,
+            'payload_bytes' => $payloadLength,
             'complete' => $complete,
         ];
     }
