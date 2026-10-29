@@ -103,6 +103,12 @@ class Phase34CContractTests(unittest.TestCase):
         d=self.fixture();d["checkpoint_relative_seconds"]["LOGIN_ZERO_RESULT"]="0.09"
         self.assertFalse(classify(d)["original_client_order_observed"])
 
+    def test_reject_nonfinite_timestamps(self):
+        for bad in (float("nan"),float("inf"),float("-inf")):
+            d=self.fixture()
+            d["checkpoint_relative_seconds"]["GARDEN_REQUEST"]=bad
+            self.assertFalse(classify(d)["original_client_order_observed"])
+
     def test_reject_negative_overlap_count(self):
         d=self.fixture();d["stale_one_byte_overlap_candidates"]=-1
         self.assertFalse(classify(d)["original_client_order_observed"])
