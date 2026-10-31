@@ -1,0 +1,24 @@
+name: CGM Phase34G Direct Desktop Membership (Offline Only)
+on:
+  push:
+    branches:
+      - feat/phase34g-direct-desktop-garden-preflight
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cgm-email-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax verify reused source and tests
+        run: |
+          python -m py_compile staging/cgm-direct-desktop-v1/cgm_membership.py
+          python -m py_compile staging/cgm-direct-desktop-v1/cgm_attempts.py
+          python -m py_compile staging/cgm-direct-desktop-v1/cgm_membership_gate.py
+          python -m py_compile staging/cgm-direct-desktop-v1/tests/test_cgm_preflight.py
+      - name: Validate email-only preflight with invented accounts (no network/game)
+        run: PYTHONPATH=staging/cgm-direct-desktop-v1 python -m unittest discover -s staging/cgm-direct-desktop-v1/tests -p 'test_cgm_preflight.py' -v
