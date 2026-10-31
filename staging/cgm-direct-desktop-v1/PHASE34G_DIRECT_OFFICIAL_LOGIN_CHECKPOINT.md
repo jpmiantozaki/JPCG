@@ -17,7 +17,7 @@ The NEW direct-client architecture is:
 1. Original `GameCipher.encrypt` selected signed `randint(-7,7)`, occasionally creating an undecodable 0xFF header. In **500 deterministic offline cases, 116 failed**. Correct native valid lengths are L=2..9; updated cipher passes **2,000/2,000** deterministic round trips and was independently checked against archived traffic.
 2. Original `LoginReply` checked only opcode `p[2]==1` and could parse a fabricated `01/01/06` failure as successful-looking. Fixed to demand `01/01/00`, bounded lengths, and never dump token bytes in error text.
 3. Original Garden 17-byte record map displayed growth points (+12) as water. Correct water is +8, growth level +11, growth points +12.
-4. Original viewer misrepresented 18-byte separate slot state records as Secret Garden plants. Corrected: SG remains explicitly NOT DECODED.
+4. Original viewer misrepresented 18-byte separate slot state records as Secret Garden plants. Corrected: SG remains explicitly NOT DECODED, including in the visible SG column headings.
 5. Corrected dropped partial GameServer receive frames, validated Garden frame completeness and original C8/00/00 acknowledgment before C8/02 display, cleared password/PIN Tk entry fields at submit.
 6. Reused the **already-tested Phase2.8.6** CGM `cgm_membership.py` and `cgm_attempts.py`; no new backend or duplicate entitlement database. Sends only email/request_id/schema to JPCG, verifies response freshness, correlation, ACTIVE/unexpired TTL.
 7. Optional local `catalog.csv` supports item_id/name mapping; missing catalog remains numeric IDs. Earlier Phase4.10 recovered a complete 496-item catalogue in `couplegarden.txt`, but it was NOT silently fabricated here.
@@ -27,11 +27,11 @@ The NEW direct-client architecture is:
 - **25/25** new Python unit tests, including 2,000 original-game cipher and 500 Garden cipher deterministic synthetic round trips, refusal of rejected LoginServer result, C8/02 full 5,355-byte shape, water-versus-growth field mapping, stale membership, and verification-before-game-socket ordering.
 - **32/32** reused Phase2.8.6 membership-only tests (outdated original-stub-specific tests intentionally omitted).
 - **8/8** new source-independent GitHub-style CGM preflight tests.
-- **2/2** real Tkinter GUI Xvfb smoke tests, including password/PIN widget clearing.
+- **3/3** real Tkinter GUI Xvfb smoke tests, including password/PIN widget clearing.
 - **11/11** original *PC* `test2.pcapng` selftest assertions PASS (offline only), including captured handshake, token order, first nine Garden requests and parsed C8/02.
 - Original PC `test2.pcapng`: 219 Game/Login frames and 36 Garden frames fully parsed, showing 80 plants, 5 placed items, 37 inventory entries.
 - Archived Android/Nox-labelled `cgm(1).pcapng`: 27 Game/Login frames and 25 Garden frames fully parsed, showing 80 plants, 22 placed items, 41 inventory entries. Zero inferred SG entries.
-- Downloaded full code ZIP `CGM_Phase34G_Direct_Official_Garden_Desktop_2026-10-31.zip`, SHA256 `296f6d1e3864c5650081b7d89eef810eb49dd756547598a25f9e2b16b37dbb4e`, 40,206 B and 17 entries. ZIP CRC, each entry SHA256 and clean extraction tests verified. Contains complete corrected desktop client and launcher.
+- Downloaded full code ZIP `CGM_Phase34G_Direct_Official_Garden_Desktop_2026-10-31.zip`, SHA256 `9ad96bfa2ea9ae454f321dd699e518b802dca5d84b050e6d2fd169af573e925a`, 40,558 B and 17 entries. ZIP CRC, each entry SHA256 and clean extraction tests verified. Contains complete corrected desktop client and launcher.
 
 ## GitHub scope
 
