@@ -1,0 +1,48 @@
+# CGM Upstream Admission v2 — staging PHP session route
+
+**Date:** 2026-10-23. **Status:** staged source package built and PHP tests PASS; no Render/Cloudflare deployment, no new Nox/APK operations, no real credentials.
+
+## Deliverable
+
+Conversation downloadable artifact: `CGM_Upstream_Gated_Staging_v2.zip`, SHA256 `c96eadaf8e6ee2a763ad4131e014c8a2d0f2c7abe235519f2c48dfb801167fe6`. The ZIP contains the following three ready-to-review PHP files under `patch/public/`: `_cgm_stage0_vip_gate.php` (retained previous v1 parser), `_cgm_session_admission.php` (admission policy) and `session.php` (staging copy of current JPCG entrypoint, with flag-gated admission). It also contains `tests/run.php`, test output and a SHA256 manifest.
+
+Host PHP8.4 lint: 4/4 files clean. **32/32 synthetic tests PASS**. Original Android/Unity code unchanged.
+
+## Behavior
+
+The active flag `CGM_STAGE0_GATE_ENABLED=1` is **off by default**; disabled route behaves like existing JPCG public/session.php. With flag on, stage0 `session.php?data=` protected envelope is verified using existing JPCG `cgm_decrypt_packet`. Its first length-prefixed `INPP.` identifier is extracted while remaining original password/version fields are skipped and never logged. `cgm_membership_lookup` performs exact DB lookup; no implicit prefix alias or unauthenticated identity assertion is treated as server-verified login.
+
+- INACTIVE/EXPIRED: encrypted `error=true,message=VIP,session='',data=''` reply; original no-VIP path.
+- invalid packet/unsupported stage/backend failure: encrypted fail-closed service unavailable.
+- ACTIVE: `FORWARD_UNCHANGED` only when `CGM_UPSTREAM_SESSION_MODE=existing_origin` **and** `CGM_ORIGINAL_ORIGIN` explicitly configured; pre-existing bridge then forwards the original untouched packet. This does NOT remove the BASE upstream VIP dependency and does not grant any game session.
+- ACTIVE without compatible processor configured: fail closed; no fake `error=false`, session or login success.
+- all follow-on relay stages fail closed under strict stage0 gate until genuine provider/session binding is implemented.
+
+## Critical remaining gap
+
+The known client `MGRelayResponse` JSON fields are `error,message,data,servertype,session,vip_expiry`, but the APK does not contain the MOD server-side method that supplies *genuine game-session data* to those fields. Thus knowing field names does not give an independent session issuer. The ZIP intentionally DOES NOT implement, infer, copy or forge a genuine game session. A JPCG-owned membership lookup is working logic, not equivalent to full official login.
+
+## Next exact action
+
+Run only the offline test using synthetic fixture bytes. After review, copy the three `patch/public/` files to a **local staging checkout** of the JPCG repository; do not deploy or set feature flag in production. Real `/session.php` requests are password-bearing GET queries, so configure query-string redaction for any future permitted live traffic. Do not enable stage0 feature in a public deployment until request logging, session state, backend authority and end-to-end compatibility are solved.
+
+This report supersedes exploratory Java/JNI/Unity work as the immediate route: focus on server admission and complete compatible session processing, without altering Android client code.
+
+## Final packaged source and additional route-level checks
+
+The package was extended after the initial checkpoint to include `tests/integration_cli.py`, which executes the **actual staged PHP `session.php` file** with temporary local mock dependencies rather than merely unit-testing the admission function. Checks: flag-off unchanged bridge, ACTIVE exact original protected packet forwarded to local mock bridge, INACTIVE encrypted-failure logical payload and no session, ACTIVE unconfigured processor fail closed. All **4/4 CLI integration tests PASS**. These are synthetic test data and no network, game, APK or production operations.
+
+Final ZIP `CGM_Upstream_Gated_Staging_v2.zip` SHA256 **`29526e2ece570cafaaa41a3dfdd26ed16083e174478a91bb47de2b03c70c0495`**, 8 entries, ZIP CRC PASS. Contains 3 staged PHP files, 2 test files, README, manifest and full offline test output. Stage PHP source is also tracked in this branch under `staging/cgm-upstream-v2/patch/public/`. No files were copied into the live `public/` directory.
+
+**Server-side gap remains explicit:** original/official response values `data` and `session` cannot be inferred from metadata/client field names. This module verifies CGM admission and passes original request through only to an explicitly configured existing origin; it does not implement the MOD upstream's secret server-side session processor or eliminate its VIP dependency. Further client RE testing or endpoint rewriting alone will not manufacture a legitimate Game/Garden session.
+
+
+## Windows user execution confirmation — 2026-10-23
+
+User ran the PHP policy suite locally:
+
+`& 'D:\CGMTEST\PHP\php.exe' 'D:\CGMTEST\CGM_Upstream_Gated_Staging_v2\tests\run.php'`
+
+Actual terminal result: **ALL 32/32 PASS**, including ACTIVE explicit-existing-processor pass-through, INACTIVE/EXPIRED VIP denial, checksum tampering rejection, malformed/stage1 fail-closed behavior, missing processor rejection, and no game-session fabrication. This is user-confirmed execution on Windows, not merely assistant's offline tests.
+
+No evidence in this run that the staged route was deployed, that the original APK interacted with this gate, that any official login succeeded, or that an independent session processor exists. Next actual product dependency: complete compatible login/game session processing for genuinely accepted upstream sessions; no additional Unity instrumentation or repeated VIP policy testing needed.
