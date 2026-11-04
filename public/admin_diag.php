@@ -1,13 +1,14 @@
 <?php
+declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-$env = getenv('JPCG_ADMIN_KEY') ?: '';
-$header = $_SERVER['HTTP_X_ADMIN_KEY'] ?? '';
-echo json_encode([
- 'ok'=>true,
- 'env_present'=>($env !== ''),
- 'env_length'=>strlen($env),
- 'header_present'=>($header !== ''),
- 'header_length'=>strlen($header),
- 'values_match'=>($env !== '' && $header !== '' && hash_equals($env,$header))
-], JSON_UNESCAPED_SLASHES);
+header('X-Content-Type-Options: nosniff');
+// Legacy diagnostic retained for compatibility; never disclose key properties.
+$expected = getenv('JPCG_ADMIN_KEY') ?: '';
+$provided = (string)($_SERVER['HTTP_X_ADMIN_KEY'] ?? '');
+if ($expected === '' || $provided === '' || !hash_equals($expected, $provided)) {
+    http_response_code(401);
+    echo json_encode(['ok'=>false,'error'=>'unauthorized']);
+    exit;
+}
+echo json_encode(['ok'=>true,'diagnostic'=>'admin_authenticated']);
