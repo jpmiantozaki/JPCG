@@ -20,6 +20,10 @@ function db(): PDO {
         PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES=>false
     ]);
+    // PHP 8.3 with transaction pooling: avoid named PREPARE/DEALLOCATE.
+    // Keep parameters bound separately through the native PostgreSQL driver.
+    if (!$candidate->setAttribute(PDO::PGSQL_ATTR_DISABLE_PREPARES,true))
+        throw new RuntimeException('pooler parameter mode unavailable');
     $r=$candidate->query('SELECT current_database() AS db, current_user AS role')->fetch();
     if ($r['db']!=='cgm_solo_stage_r43159' || $r['role']!=='solo_stage_r43159_app')
         throw new RuntimeException('staging database identity mismatch');
