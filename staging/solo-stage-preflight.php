@@ -23,7 +23,8 @@ try {
         throw new RuntimeException('fixture not listed');
     };
     $unused=$find();
-    check_stage($unused['email']===null && $unused['redeemed_at']===null && $unused['code_full']===null);
+    check_stage($unused['email']===null && $unused['redeemed_at']===null && $unused['code_full']===$c['code']);
+    check_stage($s->editEmail($c['code_id'],$email,'new-'.$email)===null);
     check_stage(solo_state($s->rows($email),$now)===['INACTIVE',0]);
     check_stage(solo_redeem($s,$email,'INVALID',$now)===['INVALID_CODE',0]);
     $expiry=$now+7*86400;
@@ -36,9 +37,21 @@ try {
     check_stage(solo_state($s->rows($email),$now+1)===['ACTIVE',$expiry]);
     check_stage(solo_state($s->rows($email),$expiry)===['EXPIRED',$expiry]);
     check_stage(solo_redeem($s,$email,$c['code'],$expiry)===['INVALID_CODE',0]);
+    $newEmail='new-'.$email;
+    check_stage($s->editEmail($c['code_id'],'wrong-'.$email,$newEmail)===null);
+    $changed=$s->editEmail($c['code_id'],$email,$newEmail);
+    check_stage($changed!==null && $changed['email']===$newEmail && $changed['redeemed_at']===$now && $changed['vip_expiry']===$expiry);
+    $edited=$find();
+    check_stage($edited['email']===$newEmail && $edited['code_full']===$c['code'] && (int)$edited['vip_days']===7 && (int)$edited['vip_expiry']===$expiry);
+    check_stage($s->editEmail($c['code_id'],$email,'stale-'.$email)===null);
+    check_stage(solo_state($s->rows($email),$now+2)===['INACTIVE',0]);
+    check_stage(solo_state($s->rows($newEmail),$now+2)===['ACTIVE',$expiry]);
+    check_stage(solo_redeem($s,$email,$c['code'],$now+2)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$newEmail,$c['code'],$now+2)===['ACTIVE',$expiry]);
     check_stage($s->revoke($c['code_id'],$now+2)===true);
-    check_stage(solo_state($s->rows($email),$now+2)===['REVOKED',0]);
-    check_stage(solo_redeem($s,$email,$c['code'],$now+3)===['INVALID_CODE',0]);
+    check_stage($s->editEmail($c['code_id'],$newEmail,$email)===null);
+    check_stage(solo_state($s->rows($newEmail),$now+2)===['REVOKED',0]);
+    check_stage(solo_redeem($s,$newEmail,$c['code'],$now+3)===['INVALID_CODE',0]);
     $other=solo_issue($s,15,$now);
     check_stage($s->revoke($other['code_id'],$now)===true);
     check_stage(solo_redeem($s,$email,$other['code'],$now+1)===['INVALID_CODE',0]);
@@ -53,8 +66,8 @@ try {
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===false);
     $pdo->rollBack();
-    if ($s->rows($email)!==[]) throw new RuntimeException('rollback verification failed');
-    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/22; synthetic transaction rolled back; TLS verified\n";
+    if ($s->rows($email)!==[] || $s->rows($newEmail)!==[]) throw new RuntimeException('rollback verification failed');
+    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/32; synthetic transaction rolled back; TLS verified\n";
 } catch(Throwable $e) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
     // Never log database credentials, DSNs or SQL error text.

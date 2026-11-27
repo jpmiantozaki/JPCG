@@ -6,8 +6,8 @@ require_once __DIR__.'/_solo_vip_service.php';
 final class SoloPgStore implements SoloStore {
     public function __construct(private PDO $pdo) {}
     public function issue(array $r): void {
-        $s=$this->pdo->prepare('INSERT INTO public.cgm_solo_vip_codes(code_hash,code_hint,email,vip_days,created_at) VALUES (?,?,?,?,?)');
-        $s->execute([$r['code_hash'],$r['code_hint'],$r['email'],$r['vip_days'],$r['created_at']]);
+        $s=$this->pdo->prepare('INSERT INTO public.cgm_solo_vip_codes(code_hash,code_hint,code_full,email,vip_days,created_at) VALUES (?,?,?,?,?,?)');
+        $s->execute([$r['code_hash'],$r['code_hint'],$r['code_full']??null,$r['email'],$r['vip_days'],$r['created_at']]);
     }
     public function rows(string $email): array {
         $s=$this->pdo->prepare('SELECT redeemed_at,vip_expiry,revoked_at FROM public.cgm_solo_vip_codes WHERE email=?');
@@ -16,7 +16,7 @@ final class SoloPgStore implements SoloStore {
     public function redeem(string $hash,string $email,string $code,int $now): ?int {
         // A single conditional write is atomic under concurrent redemption and revocation.
         // The first successful claimant binds the code. Legacy pre-assigned rows stay restricted.
-        // The full code is stored only after it is consumed; unused codes remain hash-only.
+        // New codes are retained for authenticated admins; old hash-only rows can be filled on redemption.
         $s=$this->pdo->prepare('UPDATE public.cgm_solo_vip_codes SET email=?,code_full=?,redeemed_at=CAST(? AS bigint),vip_expiry=CAST(? AS bigint)+CAST(vip_days AS bigint)*86400 WHERE code_hash=? AND (email IS NULL OR email=?) AND redeemed_at IS NULL AND revoked_at IS NULL RETURNING vip_expiry');
         $s->execute([$email,$code,$now,$now,$hash,$email]);
         $expiry=$s->fetchColumn();
@@ -25,6 +25,13 @@ final class SoloPgStore implements SoloStore {
         $s=$this->pdo->prepare('SELECT vip_expiry FROM public.cgm_solo_vip_codes WHERE code_hash=? AND email=? AND redeemed_at IS NOT NULL AND revoked_at IS NULL AND vip_expiry>CAST(? AS bigint)');
         $s->execute([$hash,$email,$now]);
         $expiry=$s->fetchColumn(); return $expiry===false?null:(int)$expiry;
+    }
+    public function editEmail(string $hash,string $expectedEmail,string $newEmail): ?array {
+        // Compare-and-set ownership. Never alter redemption, expiration, duration or code.
+        $s=$this->pdo->prepare('UPDATE public.cgm_solo_vip_codes SET email=? WHERE code_hash=? AND email=? AND redeemed_at IS NOT NULL AND revoked_at IS NULL RETURNING email,redeemed_at,vip_expiry');
+        $s->execute([$newEmail,$hash,$expectedEmail]);
+        $row=$s->fetch(PDO::FETCH_ASSOC);
+        return $row===false?null:['email'=>$row['email'],'redeemed_at'=>(int)$row['redeemed_at'],'vip_expiry'=>(int)$row['vip_expiry']];
     }
     public function revoke(string $hash,int $now): bool {
         $s=$this->pdo->prepare('UPDATE public.cgm_solo_vip_codes SET revoked_at=CAST(? AS bigint) WHERE code_hash=? AND revoked_at IS NULL');

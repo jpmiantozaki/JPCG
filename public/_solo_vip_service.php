@@ -5,6 +5,7 @@ interface SoloStore {
     public function issue(array $row): void;
     public function rows(string $email): array;
     public function redeem(string $hash, string $email, string $code, int $now): ?int;
+    public function editEmail(string $hash, string $expectedEmail, string $newEmail): ?array;
     public function revoke(string $hash, int $now): bool;
     public function recent(): array;
     public function allow(string $key, int $bucket, int $limit): bool;
@@ -33,7 +34,7 @@ function solo_issue(SoloStore $store, int $days, int $now): array {
     // Distinct namespace; 128 random bits, not the 9-digit legacy mobile code.
     $code='MGANG-SOLO-'.strtoupper(bin2hex(random_bytes(16)));
     $row=['code_hash'=>hash('sha256',$code),'code_hint'=>substr($code,0,15).'...'.substr($code,-4),
-        'email'=>null,'vip_days'=>$days,'created_at'=>$now,'redeemed_at'=>null,'vip_expiry'=>null,'revoked_at'=>null];
+        'code_full'=>$code,'email'=>null,'vip_days'=>$days,'created_at'=>$now,'redeemed_at'=>null,'vip_expiry'=>null,'revoked_at'=>null];
     $store->issue($row);
     return ['code'=>$code,'code_id'=>$row['code_hash'],'email'=>null,'days'=>$days];
 }

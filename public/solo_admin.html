@@ -11,14 +11,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .muted{color:#748078;font-size:13px}.error{color:#a22}.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
 @media(max-width:650px){.hero{padding-top:24px}.brand-logo{width:66px;height:66px}.hero h1{font-size:26px}.code{font-size:17px}table{font-size:12px}.hide-sm{display:none}}
 
-.edition-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.edition-nav a{padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;color:#315a43;background:#f2f7f1}.edition-nav a[aria-current]{background:#315a43;color:white}.edition-nav a[aria-disabled]{opacity:.5;pointer-events:none}.revoked{background:#f8e2e2;color:#8b3030}.code{overflow-wrap:anywhere}button.secondary{background:#68766b}
+.edition-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.edition-nav a{padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;color:#315a43;background:#f2f7f1}.edition-nav a[aria-current]{background:#315a43;color:white}.edition-nav a[aria-disabled]{opacity:.5;pointer-events:none}.revoked{background:#f8e2e2;color:#8b3030}.code{overflow-wrap:anywhere}button.secondary{background:#68766b}.actions{display:flex;gap:6px;flex-wrap:wrap;min-width:130px}.actions button{font-size:12px;padding:8px 10px}.codecell{font-family:Consolas,monospace;overflow-wrap:anywhere;min-width:220px;max-width:320px}
 </style></head><body><header class="hero"><div class="wrap"><div class="brand"><img class="brand-logo" src="assets/cgm-logo.png" alt="Couple Garden Mobile logo"><div class="brand-copy"><h1>Couple Garden Manager</h1><p>Membership code management • Solo VIP</p></div></div></div></header>
 <main><nav class="card edition-nav" aria-label="VIP edition"><a href="admin_panel.html" id="mobileTab">Mobile VIP</a><a href="solo_admin.html" aria-current="page">Solo VIP</a><span class="muted" id="stageNotice" hidden>Staging • fictional accounts only</span></nav>
 <section class="card"><div class="toolbar"><div><h2 style="margin:0">Admin access</h2><div class="muted">Key stays in this page only.</div></div><div class="row"><div class="field"><label for="key">Admin key</label><input id="key" type="password" autocomplete="off" placeholder="Enter admin key"></div><button id="connect">Connect</button></div></div><div id="accessMsg" class="muted" aria-live="polite"></div></section>
 <section id="dash" hidden>
 <div class="grid" style="margin-bottom:16px"><div class="stat"><span>Total codes</span><b id="total">0</b></div><div class="stat"><span>Unused</span><b id="unused">0</b></div><div class="stat"><span>Active</span><b id="active">0</b></div><div class="stat"><span>Expired</span><b id="expired">0</b></div><div class="stat"><span>Revoked</span><b id="revoked">0</b></div></div>
-<section class="card"><h2 style="margin-top:0">Generate Solo VIP code</h2><p class="muted">Generate a code without an email. The first successful redemption links it to the user's login email and starts its validity. Copy the unused code now; its full value appears in the table after redemption.</p><div class="row"><div class="field"><label for="days">Validity</label><select id="days"><option value="15">15 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select></div><button id="generate">Generate Code</button></div><div id="generated" hidden class="generated"><div id="generatedDays" class="muted"></div><div class="row"><span id="code" class="code"></span><button id="copy">Copy Code</button></div><div id="copyMsg" class="muted" aria-live="polite"></div></div></section>
-<section class="card"><div class="toolbar"><div><h2 style="margin:0">Membership codes</h2><div class="muted">Latest 200 records. Unused codes have a masked hint; redeemed codes show the full consumed code and linked email.</div></div><button id="refresh">Refresh</button></div><div class="field" style="margin-top:12px"><label for="search">Find account or code</label><input id="search" type="search" placeholder="Enter login email or membership code"></div><div id="editMsg" class="muted" aria-live="polite"></div><div id="matchCount" class="muted" aria-live="polite"></div><div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Login email</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div></section></section></main>
+<section class="card"><h2 style="margin-top:0">Generate Solo VIP code</h2><p class="muted">Generate a code without an email. The first successful redemption links it to the user's login email and starts its validity. Full generated codes remain available in this authenticated admin table, including unused codes.</p><div class="row"><div class="field"><label for="days">Validity</label><select id="days"><option value="15">15 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select></div><button id="generate">Generate Code</button></div><div id="generated" hidden class="generated"><div id="generatedDays" class="muted"></div><div class="row"><span id="code" class="code"></span><button id="copy">Copy Code</button></div><div id="copyMsg" class="muted" aria-live="polite"></div></div></section>
+<section class="card"><div class="toolbar"><div><h2 style="margin:0">Membership codes</h2><div class="muted">Latest 200 records. Full codes are visible for newly generated and redeemed codes. Older hash-only records may have only a hint.</div></div><button id="refresh">Refresh</button></div><div class="field" style="margin-top:12px"><label for="search">Find account or code</label><input id="search" type="search" placeholder="Enter login email or membership code"></div><div id="editMsg" class="muted" aria-live="polite"></div><div id="matchCount" class="muted" aria-live="polite"></div><div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Code</th><th>Days</th><th>Created</th><th>Redeemed</th><th>Expiry</th><th>State</th><th>Login email</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table></div></section></section></main>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -42,9 +42,23 @@ function renderRows(){
  $('rows').replaceChildren();
  for(const r of rows){
   const tr=document.createElement('tr'),s=state(r);
-  td(tr,r.code_full||r.code_hint);td(tr,r.vip_days);td(tr,dt(r.created_at));td(tr,dt(r.redeemed_at));td(tr,dt(r.vip_expiry));
+  const codeCell=td(tr,r.code_full||r.code_hint);codeCell.className='codecell';
+  if(!r.code_full){const hint=document.createElement('div');hint.className='muted';hint.textContent='Original full code not stored';codeCell.append(hint);}
+  td(tr,r.vip_days);td(tr,dt(r.created_at));td(tr,dt(r.redeemed_at));td(tr,dt(r.vip_expiry));
   const sc=td(tr,'');const badge=document.createElement('span');badge.className='badge '+s;badge.textContent=s;sc.append(badge);
-  td(tr,r.email||'Unassigned');const ac=td(tr,'');
+  td(tr,r.email||'Unassigned');const ac=td(tr,'');ac.className='actions';
+  if(r.redeemed_at!==null && r.email && s!=='revoked'){
+   const edit=document.createElement('button');edit.textContent='Edit email';
+   edit.onclick=()=>run(async()=>{
+    const old=r.email,entered=prompt('Enter the correct account email. The original redemption date and expiry stay unchanged.',old);
+    if(entered===null)return;
+    const email=entered.trim();if(!email||email===old)return;
+    if(!/^[^\s@:]+@[^\s@:]+\.[^\s@:]+$/.test(email))throw Error('Enter a valid email.');
+    if(!confirm('Move this Solo VIP membership from '+old+' to '+email+'? The original expiry will stay unchanged.'))return;
+    await api({action:'edit_email',code_id:r.code_id,expected_email:old,email});
+    await load();$('editMsg').textContent='Email corrected. Original VIP expiry is unchanged.';
+   });ac.append(edit);
+  }
   if(s!=='revoked'){const b=document.createElement('button');b.className='secondary';b.textContent='Revoke';b.onclick=()=>run(async()=>{if(confirm('Revoke this Solo VIP code?')){await api({action:'revoke',code_id:r.code_id});await load();$('editMsg').textContent='Solo code revoked.';}});ac.append(b);}
   $('rows').append(tr);
  }
@@ -61,7 +75,7 @@ $('generate').onclick=()=>run(async()=>{
  $('code').textContent='';$('generated').hidden=true;
  const j=await api({action:'generate',days:Number($('days').value)});
  $('generatedDays').textContent='New '+j.days+'-day Solo VIP code (unassigned)';
- $('code').textContent=j.code;$('copyMsg').textContent='Copy this code before leaving the page.';$('generated').hidden=false;await load();
+ $('code').textContent=j.code;$('copyMsg').textContent='This code is saved in the admin table.';$('generated').hidden=false;await load();
 });
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('code').textContent);$('copyMsg').textContent='Code copied.';}catch(e){$('copyMsg').textContent='Select the code and copy manually.';}};
 </script></body></html>

@@ -39,6 +39,15 @@ function solo_dispatch(callable $factory,string $adminKey,bool $admin=false): ne
             if ($action==='list') {
                 solo_keys($b,['action']); $store=$factory(); solo_reply(['ok'=>true,'codes'=>$store->recent(),'server_time'=>time()]);
             }
+            if ($action==='edit_email') {
+                solo_keys($b,['action','code_id','expected_email','email']);
+                if (!is_string($b['code_id']) || !preg_match('/\A[a-f0-9]{64}\z/D',$b['code_id'])) throw new SoloInput('invalid_code_id');
+                $old=solo_email($b['expected_email']);$new=solo_email($b['email']);
+                if ($old===$new) throw new SoloInput('email_unchanged');
+                $store=$factory();$row=$store->editEmail($b['code_id'],$old,$new);
+                if ($row===null) solo_reply(['error'=>'email_edit_conflict_refresh'],409);
+                solo_reply(['ok'=>true]+$row);
+            }
             if ($action==='revoke') {
                 solo_keys($b,['action','code_id']);
                 if (!is_string($b['code_id']) || !preg_match('/\A[a-f0-9]{64}\z/D',$b['code_id'])) throw new SoloInput('invalid_code_id');
