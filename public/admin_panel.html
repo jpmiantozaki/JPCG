@@ -13,9 +13,9 @@ label{font-weight:700;font-size:13px}input,select{padding:11px;border:1px solid 
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #edf0ec}th{color:#68766b}.badge{padding:5px 9px;border-radius:99px;font-size:12px;font-weight:bold}.active{background:#e1f3e5;color:#28633a}.unused{background:#fff1ce;color:#765a12}.expired{background:#eee;color:#666}
 .muted{color:#748078;font-size:13px}.error{color:#a22}.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
 @media(max-width:650px){.hero{padding-top:24px}.brand-logo{width:66px;height:66px}.hero h1{font-size:26px}.code{font-size:17px}table{font-size:12px}.hide-sm{display:none}}
-</style></head><body>
+.edition-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.edition-nav a{padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;color:#315a43;background:#f2f7f1}.edition-nav a[aria-current]{background:#315a43;color:white}</style></head><body>
 <header class="hero"><div class="wrap"><div class="brand"><img class="brand-logo" src="assets/cgm-logo.png" alt="Couple Garden Mobile logo"><div class="brand-copy"><h1>Couple Garden Mobile</h1><p>Membership code management • Independent CGM service</p></div></div></div></header>
-<main>
+<main><nav class="card edition-nav" aria-label="VIP edition"><a href="admin_panel.html" aria-current="page">Mobile VIP</a><a href="solo_admin.html">Solo VIP</a></nav>
 <section class="card"><div class="toolbar"><div><h2 style="margin:0">Admin access</h2><div class="muted">Your key is kept in this browser session only.</div></div>
 <div class="row"><div class="field"><label>Admin key</label><input id="key" type="password" placeholder="Enter admin key"></div><button id="connect">Connect</button></div></div><div id="accessMsg" class="muted"></div></section>
 
@@ -82,4 +82,5 @@ $('rows').onclick=async event=>{
 
 async function gen(){let b=$('generate');if(b.disabled)return;b.disabled=true;b.textContent='Generating…';$('generated').textContent='';try{let d=Number($('days').value);let j=await api('/admin_generate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:d,count:1})});let c=j.codes&&j.codes[0];if(!c)throw Error('No plaintext code returned');$('generated').innerHTML=`<div class="generated"><div class="muted">New ${esc(j.days||d)}-day CGMANG code</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:7px"><span class="code">${esc(c)}</span><button id="copy">Copy Code</button></div><div id="copyMsg" class="muted" style="margin-top:8px">This code is saved and available in the admin table.</div></div>`;$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(c);$('copy').textContent='Copied!';$('copyMsg').textContent='Code copied to clipboard.'}catch(e){$('copyMsg').textContent='Clipboard blocked; copy the code manually.'}};await load()}catch(e){$('generated').innerHTML='<div class="error">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Generate Code'}}
 $('connect').onclick=load;$('refresh').onclick=load;$('generate').onclick=gen;if($('key').value)load();
-</script></body></html>
+</script>
+</body></html>

@@ -1,0 +1,16 @@
+# Isolated Solo membership test service; never use this Dockerfile for production.
+FROM php:8.3-apache
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev ca-certificates \
+    && docker-php-ext-install pdo_pgsql \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /var/www/html
+COPY public/_solo_vip_api.php public/_solo_vip_pg.php public/_solo_vip_service.php public/solo_admin.php public/solo_vip.php public/solo_admin.html /var/www/html/
+COPY staging/solo-stage-common.php /var/www/html/_common.php
+COPY staging/solo-stage-index.html /var/www/html/index.html
+COPY public/solo_admin.html /var/www/html/admin_panel.html
+COPY public/assets/ /var/www/html/assets/
+COPY staging/solo-stage-preflight.php /opt/solo-stage/preflight.php
+RUN for f in /var/www/html/*.php /opt/solo-stage/*.php; do php -l "$f" || exit 1; done
+EXPOSE 80
+CMD ["sh", "-c", "php /opt/solo-stage/preflight.php && exec apache2-foreground"]
