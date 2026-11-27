@@ -18,10 +18,13 @@ try {
     $now=time();$email='qa-'.bin2hex(random_bytes(16)).'@example.invalid';
     $c=solo_issue($s,7,$now);
     check_stage($c['email']===null);
-    check_stage(strlen($c['code'])===12 && preg_match('/\AACGM[2-9A-HJ-NP-Z]{8}\z/D',$c['code'])===1);
+    check_stage(strlen($c['code'])===14 && preg_match('/\AACGM[0-9]{10}\z/D',$c['code'])===1);
     check_stage($s->issue(['code_hash'=>$c['code_id'],'code_hint'=>'duplicate test','code_full'=>$c['code'],'email'=>null,'vip_days'=>365,'created_at'=>$now])===false);
     check_stage(solo_redeem($s,$email,'ACGM00000000',$now)===['INVALID_CODE',0]);
     check_stage(solo_redeem($s,$email,'ACGM2345678',$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,'ACGM123456789',$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,'ACGM12345678901',$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,'ACGM123456789X',$now)===['INVALID_CODE',0]);
     check_stage(solo_redeem($s,$email,'MGANG123456789',$now)===['INVALID_CODE',0]);
     $find=static function() use ($s,$c): array {
         foreach ($s->recent() as $row) if ($row['code_id']===$c['code_id']) return $row;
@@ -73,13 +76,25 @@ try {
     check_stage($s->issue(['code_hash'=>$legacyFreeHash,'code_hint'=>'legacy unassigned','code_full'=>$legacyFree,'email'=>null,'vip_days'=>2,'created_at'=>$now])===true);
     check_stage(solo_redeem($s,$legacyEmail,$legacyFree,$now)===['ACTIVE',$now+2*86400]);
     check_stage(solo_redeem($s,$email,$legacyFree,$now)===['INVALID_CODE',0]);
+    // Leading zero is retained as text. Previously generated 12-character codes stay valid.
+    $zeroCode='ACGM0';
+    for ($i=0;$i<9;++$i) $zeroCode.=(string)random_int(0,9);
+    $zeroHash=hash('sha256',$zeroCode);$zeroEmail='zero-'.$email;
+    check_stage($s->issue(['code_hash'=>$zeroHash,'code_hint'=>'leading zero QA','code_full'=>$zeroCode,'email'=>null,'vip_days'=>3,'created_at'=>$now])===true);
+    check_stage(solo_redeem($s,$zeroEmail,$zeroCode,$now)===['ACTIVE',$now+3*86400]);
+    $alphaCode='ACGMX';$alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    for ($i=0;$i<7;++$i) $alphaCode.=$alphabet[random_int(0,strlen($alphabet)-1)];
+    $alphaHash=hash('sha256',$alphaCode);$alphaEmail='alpha-'.$email;
+    check_stage($s->issue(['code_hash'=>$alphaHash,'code_hint'=>'old alpha QA','code_full'=>$alphaCode,'email'=>null,'vip_days'=>4,'created_at'=>$now])===true);
+    check_stage(solo_redeem($s,$alphaEmail,strtolower($alphaCode),$now)===['ACTIVE',$now+4*86400]);
+    check_stage(solo_redeem($s,$email,$alphaCode,$now)===['INVALID_CODE',0]);
     $key=hash('sha256',random_bytes(32));$bucket=intdiv($now,60);
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===false);
     $pdo->rollBack();
-    if ($s->rows($email)!==[] || $s->rows($newEmail)!==[] || $s->rows($legacyEmail)!==[]) throw new RuntimeException('rollback verification failed');
-    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/40; synthetic transaction rolled back; TLS verified\n";
+    if ($s->rows($email)!==[] || $s->rows($newEmail)!==[] || $s->rows($legacyEmail)!==[] || $s->rows($zeroEmail)!==[] || $s->rows($alphaEmail)!==[]) throw new RuntimeException('rollback verification failed');
+    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/48; synthetic transaction rolled back; TLS verified\n";
 } catch(Throwable $e) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
     // Never log database credentials, DSNs or SQL error text.

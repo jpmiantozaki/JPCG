@@ -31,13 +31,12 @@ function solo_state(array $rows, int $now): array {
 }
 function solo_issue(SoloStore $store, int $days, int $now): array {
     if ($days<1 || $days>3650) throw new SoloInput('invalid_days');
-    // 32 unambiguous symbols, eight random characters = 40 random bits.
+    // Ten independent cryptographically random decimal digits; preserve leading zeros.
     // The ACGM prefix separates Solo from existing Mobile and older Solo codes.
-    $alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
     for ($attempt=0;$attempt<8;++$attempt) {
         $code='ACGM';
-        for ($i=0;$i<8;++$i) $code.=$alphabet[random_int(0,strlen($alphabet)-1)];
-        $row=['code_hash'=>hash('sha256',$code),'code_hint'=>'ACGM******'.substr($code,-2),
+        for ($i=0;$i<10;++$i) $code.=(string)random_int(0,9);
+        $row=['code_hash'=>hash('sha256',$code),'code_hint'=>'ACGM********'.substr($code,-2),
             'code_full'=>$code,'email'=>null,'vip_days'=>$days,'created_at'=>$now,'redeemed_at'=>null,'vip_expiry'=>null,'revoked_at'=>null];
         // The unique database key reserves the code atomically. Retry collisions only.
         if ($store->issue($row)) return ['code'=>$code,'code_id'=>$row['code_hash'],'email'=>null,'days'=>$days];
@@ -47,7 +46,7 @@ function solo_issue(SoloStore $store, int $days, int $now): array {
 function solo_redeem(SoloStore $store,string $email,mixed $code,int $now): array {
     if (!is_string($code) || strlen($code)>80) return ['INVALID_CODE',0];
     $code=strtoupper(trim($code));
-    if (!preg_match('/\A(?:ACGM[2-9A-HJ-NP-Z]{8}|MGANG-SOLO-[A-F0-9]{32})\z/D',$code)) return ['INVALID_CODE',0];
+    if (!preg_match('/\A(?:ACGM[0-9]{10}|ACGM[2-9A-HJ-NP-Z]{8}|MGANG-SOLO-[A-F0-9]{32})\z/D',$code)) return ['INVALID_CODE',0];
     $expiry=$store->redeem(hash('sha256',$code),$email,$code,$now);
     return $expiry!==null && $expiry>$now?['ACTIVE',$expiry]:['INVALID_CODE',0];
 }
