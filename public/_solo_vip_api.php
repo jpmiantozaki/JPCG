@@ -32,9 +32,9 @@ function solo_dispatch(callable $factory,string $adminKey,bool $admin=false): ne
             $provided=$_SERVER['HTTP_X_ADMIN_KEY']??'';
             if ($adminKey==='' || !is_string($provided) || !hash_equals($adminKey,$provided)) solo_reply(['error'=>'unauthorized'],401);
             if ($action==='generate') {
-                solo_keys($b,['action','email','days']); $email=solo_email($b['email']);
+                solo_keys($b,['action','days']);
                 if (!is_int($b['days']) || $b['days']<1 || $b['days']>3650) throw new SoloInput('invalid_days');
-                $store=$factory(); solo_reply(['ok'=>true]+solo_issue($store,$email,$b['days'],time()));
+                $store=$factory(); solo_reply(['ok'=>true]+solo_issue($store,$b['days'],time()));
             }
             if ($action==='list') {
                 solo_keys($b,['action']); $store=$factory(); solo_reply(['ok'=>true,'codes'=>$store->recent(),'server_time'=>time()]);

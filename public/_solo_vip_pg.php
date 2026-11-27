@@ -13,11 +13,17 @@ final class SoloPgStore implements SoloStore {
         $s=$this->pdo->prepare('SELECT redeemed_at,vip_expiry,revoked_at FROM public.cgm_solo_vip_codes WHERE email=?');
         $s->execute([$email]); return $s->fetchAll(PDO::FETCH_ASSOC);
     }
-    public function redeem(string $hash,string $email,int $now): ?int {
+    public function redeem(string $hash,string $email,string $code,int $now): ?int {
         // A single conditional write is atomic under concurrent redemption and revocation.
-        // Expiry starts at redemption, never updates on replay. Email must match assignment.
-        $s=$this->pdo->prepare('UPDATE public.cgm_solo_vip_codes SET redeemed_at=CAST(? AS bigint), vip_expiry=CAST(? AS bigint)+CAST(vip_days AS bigint)*86400 WHERE code_hash=? AND email=? AND redeemed_at IS NULL AND revoked_at IS NULL RETURNING vip_expiry');
-        $s->execute([$now,$now,$hash,$email]);
+        // The first successful claimant binds the code. Legacy pre-assigned rows stay restricted.
+        // The full code is stored only after it is consumed; unused codes remain hash-only.
+        $s=$this->pdo->prepare('UPDATE public.cgm_solo_vip_codes SET email=?,code_full=?,redeemed_at=CAST(? AS bigint),vip_expiry=CAST(? AS bigint)+CAST(vip_days AS bigint)*86400 WHERE code_hash=? AND (email IS NULL OR email=?) AND redeemed_at IS NULL AND revoked_at IS NULL RETURNING vip_expiry');
+        $s->execute([$email,$code,$now,$now,$hash,$email]);
+        $expiry=$s->fetchColumn();
+        if ($expiry!==false) return (int)$expiry;
+        // Idempotent replay by the same account while active. Never restart the duration.
+        $s=$this->pdo->prepare('SELECT vip_expiry FROM public.cgm_solo_vip_codes WHERE code_hash=? AND email=? AND redeemed_at IS NOT NULL AND revoked_at IS NULL AND vip_expiry>CAST(? AS bigint)');
+        $s->execute([$hash,$email,$now]);
         $expiry=$s->fetchColumn(); return $expiry===false?null:(int)$expiry;
     }
     public function revoke(string $hash,int $now): bool {
@@ -25,7 +31,7 @@ final class SoloPgStore implements SoloStore {
         $s->execute([$now,$hash]); return $s->rowCount()===1;
     }
     public function recent(): array {
-        return $this->pdo->query('SELECT code_hash AS code_id,code_hint,email,vip_days,created_at,redeemed_at,vip_expiry,revoked_at FROM public.cgm_solo_vip_codes ORDER BY created_at DESC,code_hash DESC LIMIT 200')->fetchAll(PDO::FETCH_ASSOC);
+        return $this->pdo->query('SELECT code_hash AS code_id,code_hint,code_full,email,vip_days,created_at,redeemed_at,vip_expiry,revoked_at FROM public.cgm_solo_vip_codes ORDER BY created_at DESC,code_hash DESC LIMIT 200')->fetchAll(PDO::FETCH_ASSOC);
     }
     public function allow(string $key,int $bucket,int $limit): bool {
         $s=$this->pdo->prepare('INSERT INTO public.cgm_solo_vip_limits(bucket,rate_key,attempts) VALUES (?,?,1) ON CONFLICT(bucket,rate_key) DO UPDATE SET attempts=cgm_solo_vip_limits.attempts+1 WHERE cgm_solo_vip_limits.attempts < ? RETURNING attempts');

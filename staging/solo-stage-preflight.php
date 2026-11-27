@@ -16,25 +16,45 @@ try {
     $pdo->beginTransaction();
     $s=new SoloPgStore($pdo);
     $now=time();$email='qa-'.bin2hex(random_bytes(16)).'@example.invalid';
-    $c=solo_issue($s,$email,7,$now);
+    $c=solo_issue($s,7,$now);
+    check_stage($c['email']===null);
+    $find=static function() use ($s,$c): array {
+        foreach ($s->recent() as $row) if ($row['code_id']===$c['code_id']) return $row;
+        throw new RuntimeException('fixture not listed');
+    };
+    $unused=$find();
+    check_stage($unused['email']===null && $unused['redeemed_at']===null && $unused['code_full']===null);
     check_stage(solo_state($s->rows($email),$now)===['INACTIVE',0]);
-    check_stage(solo_redeem($s,'wrong-'.$email,$c['code'],$now)===['INVALID_CODE',0]);
-    check_stage(solo_redeem($s,strtoupper($email),$c['code'],$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,'INVALID',$now)===['INVALID_CODE',0]);
     $expiry=$now+7*86400;
     check_stage(solo_redeem($s,$email,$c['code'],$now)===['ACTIVE',$expiry]);
-    check_stage(solo_redeem($s,$email,$c['code'],$now+1)===['INVALID_CODE',0]);
+    $bound=$find();
+    check_stage($bound['email']===$email && $bound['code_full']===$c['code'] && (int)$bound['redeemed_at']===$now);
+    check_stage(solo_redeem($s,'wrong-'.$email,$c['code'],$now+1)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,strtoupper($email),$c['code'],$now+1)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,$c['code'],$now+1)===['ACTIVE',$expiry]);
     check_stage(solo_state($s->rows($email),$now+1)===['ACTIVE',$expiry]);
     check_stage(solo_state($s->rows($email),$expiry)===['EXPIRED',$expiry]);
+    check_stage(solo_redeem($s,$email,$c['code'],$expiry)===['INVALID_CODE',0]);
     check_stage($s->revoke($c['code_id'],$now+2)===true);
     check_stage(solo_state($s->rows($email),$now+2)===['REVOKED',0]);
     check_stage(solo_redeem($s,$email,$c['code'],$now+3)===['INVALID_CODE',0]);
+    $other=solo_issue($s,15,$now);
+    check_stage($s->revoke($other['code_id'],$now)===true);
+    check_stage(solo_redeem($s,$email,$other['code'],$now+1)===['INVALID_CODE',0]);
+    // Preserve already-issued pre-assigned legacy Solo rows.
+    $legacyCode='MGANG-SOLO-'.strtoupper(bin2hex(random_bytes(16)));
+    $legacyHash=hash('sha256',$legacyCode);
+    $s->issue(['code_hash'=>$legacyHash,'code_hint'=>'legacy test','email'=>$email,'vip_days'=>1,'created_at'=>$now]);
+    check_stage(solo_redeem($s,'wrong-'.$email,$legacyCode,$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,$legacyCode,$now)===['ACTIVE',$now+86400]);
     $key=hash('sha256',random_bytes(32));$bucket=intdiv($now,60);
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===false);
     $pdo->rollBack();
     if ($s->rows($email)!==[]) throw new RuntimeException('rollback verification failed');
-    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/13; synthetic transaction rolled back; TLS verified\n";
+    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/22; synthetic transaction rolled back; TLS verified\n";
 } catch(Throwable $e) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
     // Never log database credentials, DSNs or SQL error text.
