@@ -5,9 +5,10 @@ require_once __DIR__.'/_solo_vip_service.php';
 // The existing helper may perform its original idempotent legacy schema checks.
 final class SoloPgStore implements SoloStore {
     public function __construct(private PDO $pdo) {}
-    public function issue(array $r): void {
-        $s=$this->pdo->prepare('INSERT INTO public.cgm_solo_vip_codes(code_hash,code_hint,code_full,email,vip_days,created_at) VALUES (?,?,?,?,?,?)');
+    public function issue(array $r): bool {
+        $s=$this->pdo->prepare('INSERT INTO public.cgm_solo_vip_codes(code_hash,code_hint,code_full,email,vip_days,created_at) VALUES (?,?,?,?,?,?) ON CONFLICT (code_hash) DO NOTHING RETURNING code_hash');
         $s->execute([$r['code_hash'],$r['code_hint'],$r['code_full']??null,$r['email'],$r['vip_days'],$r['created_at']]);
+        return $s->fetchColumn()!==false;
     }
     public function rows(string $email): array {
         $s=$this->pdo->prepare('SELECT redeemed_at,vip_expiry,revoked_at FROM public.cgm_solo_vip_codes WHERE email=?');

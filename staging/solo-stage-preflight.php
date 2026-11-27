@@ -18,17 +18,22 @@ try {
     $now=time();$email='qa-'.bin2hex(random_bytes(16)).'@example.invalid';
     $c=solo_issue($s,7,$now);
     check_stage($c['email']===null);
+    check_stage(strlen($c['code'])===12 && preg_match('/\AACGM[2-9A-HJ-NP-Z]{8}\z/D',$c['code'])===1);
+    check_stage($s->issue(['code_hash'=>$c['code_id'],'code_hint'=>'duplicate test','code_full'=>$c['code'],'email'=>null,'vip_days'=>365,'created_at'=>$now])===false);
+    check_stage(solo_redeem($s,$email,'ACGM00000000',$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,'ACGM2345678',$now)===['INVALID_CODE',0]);
+    check_stage(solo_redeem($s,$email,'MGANG123456789',$now)===['INVALID_CODE',0]);
     $find=static function() use ($s,$c): array {
         foreach ($s->recent() as $row) if ($row['code_id']===$c['code_id']) return $row;
         throw new RuntimeException('fixture not listed');
     };
     $unused=$find();
-    check_stage($unused['email']===null && $unused['redeemed_at']===null && $unused['code_full']===$c['code']);
+    check_stage($unused['email']===null && $unused['redeemed_at']===null && $unused['code_full']===$c['code'] && (int)$unused['vip_days']===7);
     check_stage($s->editEmail($c['code_id'],$email,'new-'.$email)===null);
     check_stage(solo_state($s->rows($email),$now)===['INACTIVE',0]);
     check_stage(solo_redeem($s,$email,'INVALID',$now)===['INVALID_CODE',0]);
     $expiry=$now+7*86400;
-    check_stage(solo_redeem($s,$email,$c['code'],$now)===['ACTIVE',$expiry]);
+    check_stage(solo_redeem($s,$email,strtolower($c['code']),$now)===['ACTIVE',$expiry]);
     $bound=$find();
     check_stage($bound['email']===$email && $bound['code_full']===$c['code'] && (int)$bound['redeemed_at']===$now);
     check_stage(solo_redeem($s,'wrong-'.$email,$c['code'],$now+1)===['INVALID_CODE',0]);
@@ -61,13 +66,20 @@ try {
     $s->issue(['code_hash'=>$legacyHash,'code_hint'=>'legacy test','email'=>$email,'vip_days'=>1,'created_at'=>$now]);
     check_stage(solo_redeem($s,'wrong-'.$email,$legacyCode,$now)===['INVALID_CODE',0]);
     check_stage(solo_redeem($s,$email,$legacyCode,$now)===['ACTIVE',$now+86400]);
+    // Old unassigned full codes remain valid after the format migration.
+    $legacyFree='MGANG-SOLO-'.strtoupper(bin2hex(random_bytes(16)));
+    $legacyFreeHash=hash('sha256',$legacyFree);
+    $legacyEmail='legacy-'.$email;
+    check_stage($s->issue(['code_hash'=>$legacyFreeHash,'code_hint'=>'legacy unassigned','code_full'=>$legacyFree,'email'=>null,'vip_days'=>2,'created_at'=>$now])===true);
+    check_stage(solo_redeem($s,$legacyEmail,$legacyFree,$now)===['ACTIVE',$now+2*86400]);
+    check_stage(solo_redeem($s,$email,$legacyFree,$now)===['INVALID_CODE',0]);
     $key=hash('sha256',random_bytes(32));$bucket=intdiv($now,60);
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===true);
     check_stage($s->allow($key,$bucket,2)===false);
     $pdo->rollBack();
-    if ($s->rows($email)!==[] || $s->rows($newEmail)!==[]) throw new RuntimeException('rollback verification failed');
-    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/32; synthetic transaction rolled back; TLS verified\n";
+    if ($s->rows($email)!==[] || $s->rows($newEmail)!==[] || $s->rows($legacyEmail)!==[]) throw new RuntimeException('rollback verification failed');
+    echo "SOLO_STAGE_PDO_ACCEPTANCE_PASS {$n}/40; synthetic transaction rolled back; TLS verified\n";
 } catch(Throwable $e) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
     // Never log database credentials, DSNs or SQL error text.
