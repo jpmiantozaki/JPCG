@@ -39,6 +39,34 @@ try {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
     // Never log database credentials, DSNs or SQL error text.
     $state=$e instanceof PDOException ? (string)$e->getCode() : get_class($e);
-    fwrite(STDERR,"SOLO_STAGE_PDO_ACCEPTANCE_FAIL check={$n} category={$state}\n");
+    // Only fixed diagnostic labels are emitted. No environment values or exception text.
+    $reason='unclassified';
+    $message=$e->getMessage();
+    if ($message==='stage flag/key missing') {
+        $reason=getenv('CGM_SOLO_VIP_ENABLED')!=='1'?'feature_flag_not_1':'admin_key_missing_or_short';
+    } elseif ($message==='staging database configuration rejected') {
+        $url=getenv('DATABASE_URL')?:'';
+        $host=getenv('CGM_SOLO_STAGE_DB_HOST')?:'';
+        $p=parse_url($url);
+        if ($url==='') $reason='database_url_missing';
+        elseif (!$p || ($p['scheme']??'')!=='postgresql') $reason='database_url_format_invalid';
+        elseif ($host==='') $reason='database_host_setting_missing';
+        elseif (($p['host']??'')!==$host) $reason='database_url_host_mismatch';
+        elseif (!preg_match('/\A[a-z0-9.-]+\.neon\.tech\z/D',$host)) $reason='database_host_not_neon';
+        elseif (($p['path']??'')!=='/cgm_solo_stage_r43159') $reason='wrong_database_name';
+        elseif ((int)($p['port']??5432)!==5432) $reason='wrong_database_port';
+        elseif (rawurldecode($p['user']??'')!=='solo_stage_r43159_app') $reason='wrong_database_role';
+        elseif (empty($p['pass'])) $reason='database_url_password_missing';
+        else $reason='database_configuration_rejected';
+    } elseif ($message==='staging database identity mismatch') {
+        $reason='database_identity_mismatch';
+    } elseif ($message==='assertion') {
+        $reason='acceptance_assertion_failed';
+    } elseif ($message==='rollback verification failed') {
+        $reason='rollback_verification_failed';
+    } elseif ($e instanceof PDOException) {
+        $reason='pdo_connection_or_query_failed';
+    }
+    fwrite(STDERR,"SOLO_STAGE_PDO_ACCEPTANCE_FAIL check={$n} category={$state} reason={$reason}\n");
     exit(1);
 }
